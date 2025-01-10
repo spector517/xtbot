@@ -1,2 +1,2 @@
-# xtbot
+# XTBot
 eXtensible Telegram Bot

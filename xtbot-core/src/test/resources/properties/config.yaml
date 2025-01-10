@@ -1,0 +1,33 @@
+version: 1
+bot_token: token
+stages:
+  - name: init
+    initial: true
+    accept:
+      - acceptor: command
+        val: start
+    next: start
+
+  - name: start
+    fail: true
+    message:
+      parse_mode: plain
+      text: Text of message
+      buttons:
+        - - display: button1
+            data: button1_data
+        - - display: button2
+            data: button2_data
+    remove_buttons: true
+    accept:
+      - acceptor: callback
+        val: vpn-advantages|about-procedure|vps-rent|stop
+    actions:
+      - exec: executor
+        args:
+          arg1: value1
+          arg2: value2
+        register: var_name
+    save:
+      some_key: some_value
+    next: null

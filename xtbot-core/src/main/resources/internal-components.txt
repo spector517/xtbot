@@ -1,0 +1,8 @@
+# Acceptors
+com.github.spector517.xtbot.lib.acceptors.CallbackAcceptors
+com.github.spector517.xtbot.lib.acceptors.CommandAcceptors
+com.github.spector517.xtbot.lib.acceptors.MessageAcceptors
+
+# Executors
+com.github.spector517.xtbot.lib.executors.SshExecutors
+com.github.spector517.xtbot.lib.executors.TextExecutors

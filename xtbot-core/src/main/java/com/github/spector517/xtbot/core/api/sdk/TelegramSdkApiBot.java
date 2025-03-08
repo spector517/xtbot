@@ -8,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -96,18 +98,28 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         }
 
         if (outputData.text() != null) {
-            var sendMessage = getSendMessage(outputData);
-            getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::setReplyMarkup);
-            sendMessage.setParseMode(outputData.parseMode());
-            try {
-                return execute(sendMessage).getMessageId();
-            } catch (TelegramApiException ex) {
-                log.error("Sending message error");
-                logException(ex);
-                throw new GatewayException(ex);
-            }
+            return sendMessage(outputData);
         }
+
+        if (outputData.sendTyping()) {
+            sendTyping(outputData);
+        }
+
         return 0;
+    }
+
+    private void sendTyping(OutputData outputData) throws GatewayException {
+        var chatAction = SendChatAction.builder()
+            .action(ActionType.TYPING.toString())
+            .chatId(outputData.chatId())
+            .build();
+        try {
+            execute(chatAction);
+        } catch (TelegramApiException ex) {
+            log.error("Sending typing action error");
+            logException(ex);
+            throw new GatewayException(ex);
+        }
     }
 
     private void removeButtons(OutputData outputData) throws GatewayException {
@@ -126,12 +138,21 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         }
     }
 
-    private SendMessage getSendMessage(OutputData outputData) {
-        return SendMessage.builder()
-                .text(outputData.text())
-                .parseMode(outputData.parseMode())
-                .chatId(outputData.chatId())
-                .build();
+    private int sendMessage(OutputData outputData) throws GatewayException {
+        var sendMessage = SendMessage.builder()
+            .text(outputData.text())
+            .parseMode(outputData.parseMode())
+            .chatId(outputData.chatId())
+            .build();
+        getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::setReplyMarkup);
+        sendMessage.setParseMode(outputData.parseMode());
+        try {
+            return execute(sendMessage).getMessageId();
+        } catch (TelegramApiException ex) {
+            log.error("Sending message error");
+            logException(ex);
+            throw new GatewayException(ex);
+        }
     }
 
     private Optional<InlineKeyboardMarkup> getInlineKeyboardMarkup(OutputData outputData) {

@@ -80,6 +80,7 @@ public abstract class EventHandler<T> implements Runnable {
 
     private void initiateStage() throws GatewayException, MappingException {
         log.info("Initiating stage");
+        sendTyping();
         updateContext();
         var output = new OutputData().chatId(updateData.chatId());
 
@@ -116,6 +117,14 @@ public abstract class EventHandler<T> implements Runnable {
         updateContext();
         saveToRepo();
         log.info("Stage initiated");
+    }
+
+    private void sendTyping() throws GatewayException {
+        gateway.produce(
+            new OutputData()
+                .chatId(updateData.chatId())
+                .sendTyping(true)
+        );
     }
 
     private void completeStage() throws MappingException {

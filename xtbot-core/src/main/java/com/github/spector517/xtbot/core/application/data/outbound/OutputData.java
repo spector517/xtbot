@@ -15,6 +15,7 @@ public class OutputData {
     private List<List<Button>> buttons = List.of();
     private boolean removeButtons;
     private int previousSendedMessageId;
+    private boolean sendTyping;
     
     @Data
     @Accessors(fluent = true, chain = true)

@@ -101,6 +101,7 @@ class YamlFilePropertiesLoaderTest {
                                 true,
                                 new MessageProps(
                                         null,
+                                        null,
                                         "Text of message",
                                         ParseModeProps.PLAIN_TEXT,
                                         List.of(

@@ -4,6 +4,7 @@ import java.util.List;
 
 public record MessageProps(
         String id,
+        String delete,
         String text,
         ParseModeProps parseMode,
         List<List<ButtonProps>> buttons

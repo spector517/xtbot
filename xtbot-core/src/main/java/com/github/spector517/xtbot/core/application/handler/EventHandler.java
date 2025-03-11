@@ -87,6 +87,9 @@ public abstract class EventHandler<T> implements Runnable {
 
         stage.message().ifPresent(message -> {
             message.id().ifPresent(id -> output.messageId(Integer.parseInt(id.value(context))));
+            message.deleteId().ifPresent(deleteId -> 
+                output.deleteMessageId(Integer.parseInt(deleteId.value(context)))
+            );
             message.text().ifPresent(text -> output.text(text.value(context)));
             output.parseMode(message.parseMode().type());
 

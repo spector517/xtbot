@@ -13,6 +13,7 @@ import java.util.Optional;
 public class Message {
 
     private Optional<Template> id;
+    private Optional<Template> deleteId;
     private final Optional<Template> text;
     private final ParseMode parseMode;
     private final List<List<Button>> buttons;
@@ -21,6 +22,9 @@ public class Message {
         this.id = props.id() == null || props.id().isBlank()
             ? Optional.empty()
             : Optional.of(new Template(container.render(), props.id()));
+        this.deleteId = props.delete() == null || props.delete().isBlank()
+            ? Optional.empty()
+            : Optional.of(new Template(container.render(), props.delete()));
         this.text = props.text() == null || props.text().isBlank()
             ? Optional.empty()
             : Optional.of(new Template(container.render(), props.text()));

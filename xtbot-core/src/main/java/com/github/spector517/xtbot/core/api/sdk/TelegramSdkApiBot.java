@@ -90,6 +90,10 @@ public class TelegramSdkApiBot extends ExtendedTelegramLongPollingBot {
             removeButtons(outputData);
         }
 
+        if (outputData.deleteMessageId() > 0) {
+            deleteMessage(outputData);
+        }
+
         if (outputData.messageId() > 0) {
             return editMessage(outputData);
         }

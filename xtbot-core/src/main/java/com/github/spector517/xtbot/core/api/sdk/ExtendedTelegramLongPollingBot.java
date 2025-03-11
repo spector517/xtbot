@@ -6,6 +6,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -20,7 +21,7 @@ import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot implements Gateway<Update>  {
+abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot implements Gateway<Update> {
 
     protected ExtendedTelegramLongPollingBot(String token) {
         super(token);
@@ -98,6 +99,19 @@ public abstract class ExtendedTelegramLongPollingBot extends TelegramLongPolling
             return outputData.messageId();
         } catch (Exception ex) {
             log.error("Editing buttons error");
+            logException(ex);
+            throw new GatewayException(ex);
+        }
+    }
+
+    protected void deleteMessage(OutputData outputData) throws GatewayException {
+        var deleteMessage = DeleteMessage.builder()
+            .chatId(outputData.chatId())
+            .messageId(outputData.deleteMessageId());
+        try {
+            execute(deleteMessage.build());
+        } catch (Exception ex) {
+            log.error("Deleting message error");
             logException(ex);
             throw new GatewayException(ex);
         }

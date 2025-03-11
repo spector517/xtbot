@@ -11,6 +11,7 @@ public class OutputData {
 
     private long chatId;
     private int messageId;
+    private int deleteMessageId;
     private String text;
     private String parseMode;
     private List<List<Button>> buttons = List.of();

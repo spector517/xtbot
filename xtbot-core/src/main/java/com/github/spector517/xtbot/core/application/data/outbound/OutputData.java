@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 public class OutputData {
 
     private long chatId;
+    private int messageId;
     private String text;
     private String parseMode;
     private List<List<Button>> buttons = List.of();

@@ -2,25 +2,15 @@ package com.github.spector517.xtbot.core.api.sdk;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.ActionType;
-import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.config.Config;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
-import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
 import com.github.spector517.xtbot.core.application.mapper.MappingException;
@@ -29,7 +19,7 @@ import com.github.spector517.xtbot.core.mapper.TgSdkUpdateToDataMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway<Update> {
+public class TelegramSdkApiBot extends ExtendedTelegramLongPollingBot {
 
     private final Config config;
     private final ComponentsContainer container;
@@ -92,92 +82,36 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
 
     @Override
     public int produce(OutputData outputData) throws GatewayException {
+        if (outputData.sendTyping()) {
+            sendTyping(outputData);
+        }
+        
         if (outputData.removeButtons()) {
             removeButtons(outputData);
+        }
+
+        if (outputData.messageId() > 0) {
+            return editMessage(outputData);
         }
 
         if (outputData.text() != null) {
             return sendMessage(outputData);
         }
 
-        if (outputData.sendTyping()) {
-            sendTyping(outputData);
-        }
-
         return 0;
     }
 
-    private void sendTyping(OutputData outputData) throws GatewayException {
-        var chatAction = SendChatAction.builder()
-            .action(ActionType.TYPING.toString())
-            .chatId(outputData.chatId())
-            .build();
-        try {
-            execute(chatAction);
-        } catch (TelegramApiException ex) {
-            log.error("Sending typing action error");
-            logException(ex);
-            throw new GatewayException(ex);
+    private int editMessage(OutputData outputData) throws GatewayException {
+        if (outputData.text() != null) {
+            return editTextMessage(outputData);
         }
-    }
-
-    private void removeButtons(OutputData outputData) throws GatewayException {
-        if (outputData.removeButtons()) {
-            try {
-                execute(EditMessageReplyMarkup.builder()
-                    .chatId(outputData.chatId())
-                    .messageId(outputData.previousSendedMessageId())
-                    .build()
-                );
-            } catch (TelegramApiException ex) {
-                log.error("Removing buttons error");
-                logException(ex);
-                throw new GatewayException(ex);
-            }
+        if (outputData.buttons() != null) {
+            return editButtons(outputData);
         }
-    }
-
-    private int sendMessage(OutputData outputData) throws GatewayException {
-        var sendMessage = SendMessage.builder()
-            .text(outputData.text())
-            .parseMode(outputData.parseMode())
-            .chatId(outputData.chatId())
-            .build();
-        getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::setReplyMarkup);
-        sendMessage.setParseMode(outputData.parseMode());
-        try {
-            return execute(sendMessage).getMessageId();
-        } catch (TelegramApiException ex) {
-            log.error("Sending message error");
-            logException(ex);
-            throw new GatewayException(ex);
-        }
-    }
-
-    private Optional<InlineKeyboardMarkup> getInlineKeyboardMarkup(OutputData outputData) {
-        var buttons = outputData.buttons().stream().map(row ->
-                row.stream().map(button ->
-                    InlineKeyboardButton.builder()
-                        .text(button.display())
-                        .callbackData(button.data())
-                        .build()
-                ).toList()
-            ).toList();
-        if (!buttons.isEmpty()) {
-            var markup = InlineKeyboardMarkup.builder()
-                .keyboard(buttons)
-                .build();
-            return Optional.of(markup);
-        }
-        return Optional.empty();
+        return 0;
     }
 
     private void pruneInProgressEvents() {
         inProgressEvents.entrySet().removeIf(entry -> entry.getValue().isDone());
-    }
-
-    private void logException(Exception ex) {
-        log.error(ex.getMessage());
-        log.debug("Exception occurred", ex);
     }
 }

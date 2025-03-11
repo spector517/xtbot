@@ -86,6 +86,7 @@ public abstract class EventHandler<T> implements Runnable {
         var output = new OutputData().chatId(updateData.chatId());
 
         stage.message().ifPresent(message -> {
+            message.id().ifPresent(id -> output.messageId(Integer.parseInt(id.value(context))));
             message.text().ifPresent(text -> output.text(text.value(context)));
             output.parseMode(message.parseMode().type());
 

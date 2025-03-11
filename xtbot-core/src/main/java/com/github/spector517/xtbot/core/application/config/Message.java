@@ -12,11 +12,15 @@ import java.util.Optional;
 @Accessors(fluent = true)
 public class Message {
 
+    private Optional<Template> id;
     private final Optional<Template> text;
     private final ParseMode parseMode;
     private final List<List<Button>> buttons;
 
     Message(MessageProps props, ComponentsContainer container) {
+        this.id = props.id() == null || props.id().isBlank()
+            ? Optional.empty()
+            : Optional.of(new Template(container.render(), props.id()));
         this.text = props.text() == null || props.text().isBlank()
             ? Optional.empty()
             : Optional.of(new Template(container.render(), props.text()));

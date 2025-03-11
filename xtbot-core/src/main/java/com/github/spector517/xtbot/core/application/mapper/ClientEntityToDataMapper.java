@@ -7,11 +7,13 @@ import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
 import com.github.spector517.xtbot.core.application.repository.ClientEntity;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
+@Slf4j
 public class ClientEntityToDataMapper implements Mapper<ClientEntity, ClientData> {
 
     private final ObjectMapper objectMapper;
@@ -40,11 +42,13 @@ public class ClientEntityToDataMapper implements Mapper<ClientEntity, ClientData
         return clientData;
     }
 
-    private <T> T mapFromJson(String json, TypeReference<T> typeRef) {
+    private <T> T mapFromJson(String json, TypeReference<T> typeRef) throws MappingException {
         try {
             return objectMapper.readValue(json, typeRef);
         } catch (JsonProcessingException ex) {
-            return null;
+            log.debug("Error mapping '{}' to {}", json, typeRef.getType());
+            log.error("Error mapping client entity to data", ex);
+            throw new MappingException(ex);
         }
     }
 }

@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.spector517.xtbot.api.annotation.Acceptor;
+import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.dto.Update;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorChecker;
@@ -57,7 +59,7 @@ class ConfigTest {
     @BeforeEach
     @SneakyThrows
     void setUp() {
-        acceptorName = "callback";
+        acceptorName = "xtbot.internal.callback";
         executorName = "executor";
 
         var yamlObjectMapper = new ObjectMapper(new YAMLFactory());
@@ -75,10 +77,19 @@ class ConfigTest {
         render = mock(Render.class);
         acceptorLoader = mock(AcceptorLoader.class);
         executorLoader = mock(ExecutorLoader.class);
+
         acceptor = mock(Method.class);
+        var acceptorAnnotation = mock(Acceptor.class);
         acceptorChecker = mock(AcceptorChecker.class);
+        when(acceptorAnnotation.value()).thenReturn("test");
+        when(acceptor.getAnnotation(Acceptor.class)).thenReturn(acceptorAnnotation);
+
         executor = mock(Method.class);
+        var executorAnnotation = mock(Executor.class);
         executorChecker = mock(ExecutorChecker.class);
+        when(executorAnnotation.value()).thenReturn("test");
+        when(executor.getAnnotation(Executor.class)).thenReturn(executorAnnotation);
+
         jsonObjectMapper = new ObjectMapper();
         when(acceptorLoader.getAcceptor(acceptorName)).thenReturn(acceptor);
         when(executorLoader.getExecutor(executorName)).thenReturn(executor);

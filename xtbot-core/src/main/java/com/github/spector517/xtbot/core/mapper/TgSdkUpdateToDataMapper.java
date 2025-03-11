@@ -30,16 +30,20 @@ public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
     private String initialStageName;
 
     public static long getClientId(Update update) throws MappingException {
-        return switch (getUpdateType(update)) {
+        var clientId =  switch (getUpdateType(update)) {
             case MESSAGE -> update.getMessage().getFrom().getId();
             case CALLBACK -> update.getCallbackQuery().getFrom().getId();
         };
+        log.debug("Client Telegram ID: {}", clientId);
+        return clientId;
     }
 
     @Override
     public UpdateData map(Update update) throws MappingException {
         if (initialStageName == null) {
-            throw new MappingException("Initial stage name is not set");
+            var msg = "Initial stage name is not set";
+            log.debug(msg);
+            throw new MappingException(msg);
         }
         var updateType = getUpdateType(update);
         var clientData = getClientData(update, updateType);
@@ -64,9 +68,11 @@ public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
 
     private static Type getUpdateType(Update update) throws MappingException {
         if (update.hasMessage()) {
+            log.debug("Update type: {}", Type.MESSAGE);
             return Type.MESSAGE;
         }
         if (update.hasCallbackQuery()) {
+            log.debug("Update type: {}", Type.CALLBACK);
             return Type.CALLBACK;
         }
         throw new MappingException("Unknown update type");
@@ -84,6 +90,7 @@ public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
             clientData = mapper.map(clientRepository.findByExternalId(clientId));
             MDCLogManager.put(clientData);
         } catch (ClientNotFoundException ex) {
+            log.debug("Creating new client data");
             clientData = createClientData(clientId, user.getUserName());
             MDCLogManager.put(clientData);
             log.info("Created new client");

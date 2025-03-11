@@ -71,7 +71,6 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         final long clientId;
         try {
             clientId = TgSdkUpdateToDataMapper.getClientId(update);
-            MDCLogManager.putClientId(clientId);
             log.info("Received event");
         } catch (MappingException ex) {
             throw new GatewayException(ex);

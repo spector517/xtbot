@@ -59,7 +59,7 @@ class TemplateTest {
         var rawValue = "Hello {% if name %}";
         var context = new HashMap<String, Object>();
         when(render.isTemplate(rawValue)).thenReturn(true);
-        when(render.render(rawValue, context)).thenThrow(new RenderException("test"));
+        when(render.render(rawValue, context)).thenThrow(new RenderException(new Exception()));
 
         var template = new Template(render, rawValue);
         var result = template.value(context);

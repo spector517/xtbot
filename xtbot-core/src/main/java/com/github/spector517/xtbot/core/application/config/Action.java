@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
@@ -32,6 +33,8 @@ public class Action {
     private final Map<String, Object> templateArgs;
     @Getter
     private final String register;
+    @Getter
+    private final String name;
 
     Action(ActionProps props, ComponentsContainer container) {
         this.container = container;
@@ -42,6 +45,7 @@ public class Action {
             var executor = container.executorLoader().getExecutor(props.exec());
             container.executorChecker().checkExecutor(executor, props.args());
             this.exec = executor;
+            this.name = executor.getAnnotation(Executor.class).value();
         } catch (ExecutorNotFoundException | ExecutorCheckFailedException ex) {
             throw new LoadConfigException(ex);
         }

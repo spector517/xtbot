@@ -1,4 +1,4 @@
-package com.github.spector517.xtbot.core.application.component;
+package com.github.spector517.xtbot.core.container;
 
 public class ComponentsCreationException extends RuntimeException {
 

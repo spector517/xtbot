@@ -23,16 +23,25 @@ public class JinjaRender implements Render {
     @Override
     public String render(String template, Map<String, Object> context) throws RenderException {
         try {
-            return jinjava.render(template, context);
+            log.debug("Render '{}' with context '{}'", template, context);
+            var res = jinjava.render(template, context);
+            log.debug("Rendered successfully");
+            return res;
         } catch (Exception ex) {
             log.warn("Render error: {}", ex.getMessage());
             log.debug("Exception occurred", ex);
-            throw new RenderException(ex.getMessage());
+            throw new RenderException(ex);
         }
     }
 
     @Override
     public boolean isTemplate(String template) {
-        return template != null && JINJA_FIND_PATTERN.matcher(template).find();
+        var res = template != null && JINJA_FIND_PATTERN.matcher(template).find();
+        if (res) {
+            log.debug("String '{}' is template", template);
+        } else {
+            log.debug("String '{}' is not template", template);
+        }
+        return res;
     }
 }

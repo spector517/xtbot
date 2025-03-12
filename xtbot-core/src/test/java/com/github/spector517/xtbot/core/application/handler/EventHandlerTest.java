@@ -286,6 +286,7 @@ class EventHandlerTest {
         when(gateway.produce(outputCaptor.capture())).thenReturn(0);
         var expectedOutput = new OutputData()
             .chatId(11)
+            .removeButtons(true)
             .previousSendedMessageId(111);
 
         new TestEventHandler(update, config, componentsContainer, gateway).run();

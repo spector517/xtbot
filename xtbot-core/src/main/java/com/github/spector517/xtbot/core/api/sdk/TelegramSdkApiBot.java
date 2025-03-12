@@ -118,4 +118,9 @@ public class TelegramSdkApiBot extends ExtendedTelegramLongPollingBot {
     private void pruneInProgressEvents() {
         inProgressEvents.entrySet().removeIf(entry -> entry.getValue().isDone());
     }
+
+    private void logException(Exception ex) {
+        log.error(ex.getMessage());
+        log.debug("Exception occurred", ex);
+    }
 }

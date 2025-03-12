@@ -36,7 +36,6 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
             execute(chatAction);
         } catch (TelegramApiException ex) {
             log.error("Sending typing action error");
-            logException(ex);
             throw new GatewayException(ex);
         }
     }
@@ -51,7 +50,6 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
                 );
             } catch (TelegramApiException ex) {
                 log.error("Removing buttons error");
-                logException(ex);
                 throw new GatewayException(ex);
             }
         }
@@ -67,7 +65,6 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
             return execute(sendMessage.build()).getMessageId();
         } catch (Exception ex) {
             log.error("Sending message error");
-            logException(ex);
             throw new GatewayException(ex);
         }
     }
@@ -84,7 +81,6 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
             return outputData.messageId();
         } catch (Exception ex) {
             log.error("Editing message error");
-            logException(ex);
             throw new GatewayException(ex);
         }
     }
@@ -99,7 +95,6 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
             return outputData.messageId();
         } catch (Exception ex) {
             log.error("Editing buttons error");
-            logException(ex);
             throw new GatewayException(ex);
         }
     }
@@ -112,14 +107,8 @@ abstract class ExtendedTelegramLongPollingBot extends TelegramLongPollingBot imp
             execute(deleteMessage.build());
         } catch (Exception ex) {
             log.error("Deleting message error");
-            logException(ex);
             throw new GatewayException(ex);
         }
-    }
-
-    protected void logException(Exception ex) {
-        log.error(ex.getMessage());
-        log.debug("Exception occurred", ex);
     }
 
     private Optional<InlineKeyboardMarkup> getInlineKeyboardMarkup(OutputData outputData) {

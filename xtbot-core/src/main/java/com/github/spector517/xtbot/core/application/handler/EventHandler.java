@@ -53,9 +53,9 @@ public abstract class EventHandler<T> implements Runnable {
                 bindFailStage();
                 process();
             } catch(Exception e) {
-                logException(ex);
+                logException(e);
                 clearMDC();
-                throw ex;
+                throw e;
             }
         }
 
@@ -195,6 +195,10 @@ public abstract class EventHandler<T> implements Runnable {
     }
 
     private void bindFailStage() {
+        var previousStageOptional = updateData.client().getPreviousStage();
+        if (previousStageOptional.isEmpty() || !previousStageOptional.get().equals(stage.name())) {
+            updateData.client().registerCompletedStage(stage.name());
+        }
         log.info("Binding fail stage");
         stage = config.failStage();
 

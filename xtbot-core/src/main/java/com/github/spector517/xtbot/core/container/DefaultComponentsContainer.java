@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.spector517.xtbot.api.dto.Update;
 import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
-import com.github.spector517.xtbot.core.application.component.ComponentsCreationException;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.CommonMethodsLoader;

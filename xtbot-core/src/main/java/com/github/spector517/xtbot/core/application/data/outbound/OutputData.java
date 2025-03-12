@@ -10,11 +10,14 @@ import lombok.experimental.Accessors;
 public class OutputData {
 
     private long chatId;
+    private int messageId;
+    private int deleteMessageId;
     private String text;
     private String parseMode;
     private List<List<Button>> buttons = List.of();
     private boolean removeButtons;
     private int previousSendedMessageId;
+    private boolean sendTyping;
     
     @Data
     @Accessors(fluent = true, chain = true)

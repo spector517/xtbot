@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Main {
 
-    public static final String VERSION = "0.1.0";
+    public static final String VERSION = "0.2.0";
     
     public static void main(String[] args) {
         log.info("Starting XTBot v%s ...".formatted(VERSION));

@@ -43,22 +43,23 @@ public abstract class EventHandler<T> implements Runnable {
             throw ex;
         }
 
-        log.info("Start event processing");
+        log.info("Start event processing...");
 
         try {
             process();
         } catch(Exception ex) {
+            logException(ex);
             try {
                 bindFailStage();
                 process();
             } catch(Exception e) {
-                logException(ex);
+                logException(e);
                 clearMDC();
-                throw ex;
+                throw e;
             }
         }
 
-        log.info("Event processed");
+        log.info("Event processed.");
         clearMDC();
     }
 
@@ -79,11 +80,16 @@ public abstract class EventHandler<T> implements Runnable {
     }
 
     private void initiateStage() throws GatewayException, MappingException {
-        log.info("Initiating stage");
+        log.info("Initiating stage...");
+        sendTyping();
         updateContext();
         var output = new OutputData().chatId(updateData.chatId());
 
         stage.message().ifPresent(message -> {
+            message.id().ifPresent(id -> output.messageId(Integer.parseInt(id.value(context))));
+            message.deleteId().ifPresent(deleteId -> 
+                output.deleteMessageId(Integer.parseInt(deleteId.value(context)))
+            );
             message.text().ifPresent(text -> output.text(text.value(context)));
             output.parseMode(message.parseMode().type());
 
@@ -115,24 +121,38 @@ public abstract class EventHandler<T> implements Runnable {
         updateData.client().currentStageInitiated(true);
         updateContext();
         saveToRepo();
-        log.info("Stage initiated");
+        log.info("Stage initiated.");
+    }
+
+    private void sendTyping() throws GatewayException {
+        gateway.produce(
+            new OutputData()
+                .chatId(updateData.chatId())
+                .sendTyping(true)
+        );
     }
 
     private void completeStage() throws MappingException {
         updateContext();
-        if (
-            stage.acceptors().stream().noneMatch(acceptor -> acceptor.accept(updateData)) 
-            && !stage.autocomplete()) 
-        {
+        var isNotAccepted = stage.acceptors().stream().noneMatch(acceptor -> {
+            log.debug("Run acceptor: {}", acceptor.name());
+            var res = acceptor.accept(updateData);
+            log.debug("Acceptor '{}' result: {}", acceptor.name(), res);
+            return res;
+        });
+        if (isNotAccepted&& !stage.autocomplete()) {
             log.warn("Update not accepted. Skipped.");
             return;
         }
-        log.info("Completing stage");
+        log.info("Completing stage...");
 
         updateData.client().stageVars(new HashMap<>());
         stage.actions().forEach(action -> {
+            log.debug("Run action: {}", action.name());
             var result = action.execute(updateData);
+            log.debug("Action '{}' result: {}", action.name(), result);
             var resultVar = action.register().isBlank() ? "_" : action.register();
+            log.debug("Register action result to var '{}'", resultVar);
             updateData.client().stageVars().put(resultVar, result);
         });
         bindAdditionalVars();
@@ -141,7 +161,7 @@ public abstract class EventHandler<T> implements Runnable {
         updateData.client().registerCompletedStage(stage.name());
         updateContext();
         saveToRepo();
-        log.info("Stage completed");
+        log.info("Stage completed.");
     }
 
     private void bindAdditionalVars() throws MappingException {
@@ -175,6 +195,10 @@ public abstract class EventHandler<T> implements Runnable {
     }
 
     private void bindFailStage() {
+        var previousStageOptional = updateData.client().getPreviousStage();
+        if (previousStageOptional.isEmpty() || !previousStageOptional.get().equals(stage.name())) {
+            updateData.client().registerCompletedStage(stage.name());
+        }
         log.info("Binding fail stage");
         stage = config.failStage();
 

@@ -11,12 +11,19 @@ import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorN
 import com.github.spector517.xtbot.core.application.mapper.Mapper;
 import com.github.spector517.xtbot.core.properties.AcceptorProps;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
+@Accessors(fluent = true)
 public class Acceptor {
 
     private final Method acceptorMethod;
     private final Template valueTemplate;
     private final Mapper<UpdateData, Update> apiMapper;
     private final Mapper<UpdateData, Map<String, Object>> contextMapper;
+    @Getter
+    private final String name;
+
 
     Acceptor(AcceptorProps props, ComponentsContainer container) {
         this.apiMapper = container.updateDataToApiMapper();
@@ -26,6 +33,9 @@ public class Acceptor {
             var acceptor = container.acceptorLoader().getAcceptor(props.acceptor());
             container.acceptorChecker().checkAcceptor(acceptor);
             this.acceptorMethod = acceptor;
+            this.name = acceptor.getAnnotation(
+                com.github.spector517.xtbot.api.annotation.Acceptor.class
+            ).value();
         } catch (AcceptorNotFoundException | AcceptorCheckFailedException ex) {
             throw new LoadConfigException(ex);
         }

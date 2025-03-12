@@ -7,6 +7,9 @@ import com.github.spector517.xtbot.core.application.repository.ClientEntity;
 import com.github.spector517.xtbot.core.application.repository.ClientNotFoundException;
 import com.github.spector517.xtbot.core.application.repository.ClientRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class InternalClientRepository implements ClientRepository {
 
     private final List<ClientEntity> clients;
@@ -21,16 +24,21 @@ public class InternalClientRepository implements ClientRepository {
         if (index != -1) {
             return clients.get(index);
         }
-        throw new ClientNotFoundException("Client with external id '%s' not found".formatted(externalId));
+        var msg = "Client with external id '%s' not found in repository".formatted(externalId);
+        log.debug(msg);
+        throw new ClientNotFoundException(msg);
     }
 
     @Override
     public synchronized void save(ClientEntity entity) {
         var index = indexByExternalId(entity.externalId());
         if (index != -1) {
+            log.debug("Save existing client with id '{}' to repository", entity.externalId());
             clients.set(index, entity);
         } else {
-            entity.id(clients.size() + 1L);
+            var newId = clients.size() + 1L;
+            log.debug("Save new client with id '{}' to repository", newId);
+            entity.id(newId);
             clients.add(entity);
         }
     }

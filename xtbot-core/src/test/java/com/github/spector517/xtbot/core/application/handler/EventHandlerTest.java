@@ -161,6 +161,7 @@ class EventHandlerTest {
         verify(contextMapper, times(2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         verify(repository).save(any());
+        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(1111, clientData.previousSendedMessageId());
         assertTrue(clientData.currentStageInitiated());
     }
@@ -190,6 +191,7 @@ class EventHandlerTest {
 
         verify(contextMapper, times(3)).map(any(UpdateData.class));
         verify(repository).save(any());
+        verify(gateway, never()).produce(any(OutputData.class));
         assertEquals(Map.of("key1", "val1"), clientData.additionalVars());
         assertTrue(clientData.currentStageCompleted());
     }
@@ -212,6 +214,7 @@ class EventHandlerTest {
 
         new TestEventHandler(update, config, componentsContainer, gateway).run();
 
+        verify(gateway, never()).produce(any(OutputData.class));
         verify(contextMapper).map(any(UpdateData.class));
         verify(repository, never()).save(any());
     }
@@ -251,6 +254,7 @@ class EventHandlerTest {
 
         verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
         verify(repository, times(2)).save(any());
+        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         assertEquals(secondStageName, clientData.currentStage());
         assertTrue(clientData.currentStageInitiated());
@@ -282,6 +286,7 @@ class EventHandlerTest {
         when(gateway.produce(outputCaptor.capture())).thenReturn(0);
         var expectedOutput = new OutputData()
             .chatId(11)
+            .removeButtons(true)
             .previousSendedMessageId(111);
 
         new TestEventHandler(update, config, componentsContainer, gateway).run();
@@ -289,6 +294,7 @@ class EventHandlerTest {
         verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         verify(repository).save(any());
+        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(111, clientData.previousSendedMessageId());
         assertEquals(clientData.currentStage(), failStageName);
         assertTrue(clientData.currentStageInitiated());
@@ -313,7 +319,7 @@ class EventHandlerTest {
 
         new TestEventHandler(update, config, componentsContainer, gateway).run();
 
-        verify(gateway, times(2)).produce(any(OutputData.class));
+        verify(gateway, times(2 + 2)).produce(any(OutputData.class));
         assertEquals(secondStageName, clientData.currentStage());
         assertTrue(clientData.currentStageInitiated());
         assertFalse(clientData.currentStageCompleted());

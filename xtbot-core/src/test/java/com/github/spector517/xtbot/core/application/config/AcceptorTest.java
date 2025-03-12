@@ -52,7 +52,11 @@ class AcceptorTest {
 
         method = mock(Method.class);
         methodName = "someMethod";
+        var annotation = mock(com.github.spector517.xtbot.api.annotation.Acceptor.class);
+        when(annotation.value()).thenReturn("test");
         when(method.invoke(null, update, acceptorValue)).thenReturn(true);
+        when(method.getAnnotation(com.github.spector517.xtbot.api.annotation.Acceptor.class))
+            .thenReturn(annotation);
 
         acceptorProps = new AcceptorProps(methodName, acceptorValue);
 

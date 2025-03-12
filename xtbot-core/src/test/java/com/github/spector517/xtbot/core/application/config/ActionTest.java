@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
@@ -61,9 +62,12 @@ class ActionTest {
         resultVarName = "var_name";
         var param1 = mock(Parameter.class);
         var param2 = mock(Parameter.class);
+        var annotation = mock(Executor.class);
+        when(annotation.value()).thenReturn("test");
         when(param1.getName()).thenReturn(paramName1);
         when(param2.getName()).thenReturn(paramName2);
         when(method.getParameters()).thenReturn(new Parameter[]{param1, param2});
+        when(method.getAnnotation(Executor.class)).thenReturn(annotation);
 
         actionProps = new ActionProps(methodName, args, resultVarName);
 

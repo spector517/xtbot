@@ -11,5 +11,6 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public enum ParseModeProps {
     @JsonProperty("markdown") MARKDOWN,
+    @JsonProperty("markdown_v2") MARKDOWN_V2,
     @JsonProperty("plain") PLAIN_TEXT
 }

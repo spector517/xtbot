@@ -2,6 +2,7 @@ package com.github.spector517.xtbot.core.jinja;
 
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.application.render.RenderException;
+import com.github.spector517.xtbot.core.jinja.filter.EscapeMd2Filter;
 import com.hubspot.jinjava.Jinjava;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ public class JinjaRender implements Render {
 
     public JinjaRender() {
         this.jinjava = new Jinjava();
+        this.jinjava.getGlobalContext().registerFilter(new EscapeMd2Filter());
     }
 
     @Override

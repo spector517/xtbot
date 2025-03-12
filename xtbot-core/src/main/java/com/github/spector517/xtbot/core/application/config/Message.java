@@ -30,6 +30,7 @@ public class Message {
             : Optional.of(new Template(container.render(), props.text()));
         this.parseMode = switch (props.parseMode()) {
             case MARKDOWN -> ParseMode.MARKDOWN;
+            case MARKDOWN_V2 -> ParseMode.MARKDOWN_V2;
             case PLAIN_TEXT -> ParseMode.PLAIN_TEXT;
             case null -> ParseMode.PLAIN_TEXT;
         };

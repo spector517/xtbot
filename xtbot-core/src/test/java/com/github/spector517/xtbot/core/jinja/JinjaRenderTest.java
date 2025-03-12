@@ -39,6 +39,18 @@ class JinjaRenderTest {
     }
 
     @Test
+    @DisplayName("Render: render with escape MarkdownV2 filter")
+    @SneakyThrows
+    void render_2() {
+        var template = "Hello {{ name | escape_md2 }}!";
+        var context = Map.of("name", (Object) "Alex*");
+
+        var result = jinjaRender.render(template, context);
+
+        assertEquals("Hello Alex\\*!", result);
+    }
+
+    @Test
     @DisplayName("Is template: yes")
     void isTemplate_0() {
         var template = "Hello {{ name }}!";

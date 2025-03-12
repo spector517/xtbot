@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 public enum ParseMode {
 
     MARKDOWN("Markdown"),
+    MARKDOWN_V2("MarkdownV2"),
     PLAIN_TEXT(null);
 
     private final String type;

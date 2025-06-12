@@ -46,8 +46,10 @@ public class ExternalJarClassLoader extends BotClassLoader {
                     var className = entry.getName()
                         .replace('/', '.')
                         .replace(".class", "");
-                    var clazz = getParent().loadClass(className);
-                    if (clazz == null) {
+                    Class<?> clazz;
+                    try {
+                        clazz = getParent().loadClass(className);
+                    } catch (ClassNotFoundException ex) {
                         clazz = defineClass(className, classBytes, 0, classBytes.length);
                     }
                     if (clazz.isAnnotationPresent(BotComponent.class)) {

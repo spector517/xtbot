@@ -1,12 +1,14 @@
 package com.github.spector517.xtbot.core.application.config;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.github.spector517.xtbot.api.annotation.Executor;
+import com.github.spector517.xtbot.api.annotation.Name;
 import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
@@ -71,7 +73,14 @@ public class Action {
 
     private Object[] getArgs(Map<String, Object> args) {
         return Arrays.stream(exec.getParameters())
-                .map(parameter -> args.get(parameter.getName()))
+                .map(parameter -> args.get(getParameterName(parameter)))
                 .toArray();
+    }
+
+    private String getParameterName(Parameter parameter) {
+        if (parameter.isAnnotationPresent(Name.class)) {
+            return parameter.getAnnotation(Name.class).value();
+        }
+        return parameter.getName();
     }
 }

@@ -1,11 +1,11 @@
-package com.github.spector517.xtbot.core.application.mapper;
+package com.github.spector517.xtbot.core.mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
 
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,12 +14,12 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @Slf4j
-public class ClientEntityToDataMapper implements Mapper<ClientEntity, ClientData> {
+public class ClientEntityToDataMapper implements Mapper<ClientData, ClientEntity> {
 
     private final ObjectMapper objectMapper;
 
     @Override
-    public ClientData map(ClientEntity clientEntity) throws MappingException {
+    public ClientData map(ClientEntity clientEntity, Object... ignored) throws MappingException {
         var clientData = new ClientData()
                 .externalId(clientEntity.externalId())
                 .name(clientEntity.name())

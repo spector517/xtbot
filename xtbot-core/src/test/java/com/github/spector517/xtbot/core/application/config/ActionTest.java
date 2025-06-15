@@ -17,6 +17,7 @@ import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Map;
 
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,22 +29,21 @@ import com.github.spector517.xtbot.core.application.extension.executor.ExecutorC
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorNotFoundException;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
+import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.container.DefaultComponentsContainer;
 import com.github.spector517.xtbot.core.properties.ActionProps;
 
 import lombok.SneakyThrows;
+import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 class ActionTest {
 
-    private DefaultComponentsContainer container;
+    private Gateway gateway;
     private ActionProps actionProps;
 
     private ExecutorLoader executorLoader;
     private ExecutorChecker executorChecker;
-    private ObjectMapper objectMapper;
     private String methodName;
     private Render render;
     private UpdateData updateData;
@@ -75,25 +75,23 @@ class ActionTest {
         when(executorLoader.getExecutor(methodName)).thenReturn(method);
 
         executorChecker = mock(ExecutorChecker.class);
-        objectMapper = mock(ObjectMapper.class);
         render = mock(Render.class);
         updateData = mock(UpdateData.class);
 
-        Mapper<UpdateData, Map<String, Object>> contextMapper = mock(Mapper.class);
+        Mapper<Map<String, Object>, UpdateData> contextMapper = mock(Mapper.class);
+        Mapper<Object, Object> actionResultMapper = mock(Mapper.class);
 
-        container = mock(DefaultComponentsContainer.class);
-        when(container.executorLoader()).thenReturn(executorLoader);
-        when(container.executorChecker()).thenReturn(executorChecker);
-        when(container.jsonObjectMapper()).thenReturn(objectMapper);
-        when(container.render()).thenReturn(render);
-        when(container.updateDataToContextMapper()).thenReturn(contextMapper);
+        gateway = mock(Gateway.class);
+        when(gateway.getRender()).thenReturn(render);
+        when(gateway.getContextMapper()).thenReturn(contextMapper);
+        when(gateway.getActionResultMapper()).thenReturn(actionResultMapper);
     }
 
     @Test
     @DisplayName("Constructor: Success create Action")
     @SneakyThrows
     void constructor_1() {
-        new Action(actionProps, container);
+        new Action(actionProps, gateway, executorChecker, executorLoader);
 
         verify(executorLoader).getExecutor(methodName);
         verify(executorChecker).checkExecutor(method, args);
@@ -108,7 +106,7 @@ class ActionTest {
 
         var ex = assertThrows(
             LoadConfigException.class,
-            () -> new Action(actionProps, container)
+            () -> new Action(actionProps, gateway, executorChecker, executorLoader)
         );
 
         assertEquals(ExecutorNotFoundException.class, ex.getCause().getClass());
@@ -124,7 +122,7 @@ class ActionTest {
 
         var ex = assertThrows(
             LoadConfigException.class,
-            () -> new Action(actionProps, container)
+            () -> new Action(actionProps, gateway, executorChecker, executorLoader)
         );
 
         assertEquals(ExecutorCheckFailedException.class, ex.getCause().getClass());
@@ -139,11 +137,11 @@ class ActionTest {
         when(method.getReturnType()).thenReturn((Class) String.class);
         when(method.invoke(null, 1, "value2")).thenReturn(result);
 
-        var action = new Action(actionProps, container);
+        var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var actualResult = action.execute(updateData);
 
         assertEquals(result, actualResult);
-        verify(objectMapper, never()).convertValue(any(), any(Class.class));
+        verify(gateway.getActionResultMapper(), never()).map(any(), any(Class.class));
     }
 
     @Test
@@ -152,34 +150,54 @@ class ActionTest {
     void execute_2() {
         var result = Map.of("key", "value");
         when(method.getReturnType()).thenReturn((Class) getClass());
-        when(objectMapper.convertValue(any(), eq(Map.class))).thenReturn(result);
+        when(gateway.getActionResultMapper().map(result, Map.class)).thenReturn(result);
         when(method.invoke(null, 1, "value2")).thenReturn(result);
 
-        var action = new Action(actionProps, container);
+        var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var actualResult = action.execute(updateData);
 
+        var objectCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(gateway.getActionResultMapper()).map(objectCaptor.capture(), eq(Map.class));
+        assertEquals(result, objectCaptor.getValue());
         assertEquals(result, actualResult);
-        verify(objectMapper).convertValue(result, Map.class);
+    }
+
+    @Test
+    @DisplayName("Execute: listable return value")
+    @SneakyThrows
+    void execute_3() {
+        var result = List.of("value1", "value2");
+        when(method.getReturnType()).thenReturn((Class) Object[].class);
+        when(gateway.getActionResultMapper().map(result, List.class)).thenReturn(result);
+        when(method.invoke(null, 1, "value2")).thenReturn(result);
+
+        var action = new Action(actionProps, gateway, executorChecker, executorLoader);
+        var actualResult = action.execute(updateData);
+
+        var objectCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(gateway.getActionResultMapper()).map(objectCaptor.capture(), eq(List.class));
+        assertEquals(result, objectCaptor.getValue());
+        assertEquals(result, actualResult);
     }
 
     @Test
     @DisplayName("Execute: invoke executor failed")
     @SneakyThrows
-    void execute_3() {
+    void execute_4() {
         when(method.getReturnType()).thenReturn((Class) getClass());
         when(method.invoke(null, 1, "value2"))
             .thenThrow(new InvocationTargetException(new Exception()));
 
-        var action = new Action(actionProps, container);
+        var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var ex = assertThrows(ActionExecutionException.class, () -> action.execute(updateData));
 
-        assertEquals(ex.getCause().getClass(), InvocationTargetException.class);
+        assertEquals(InvocationTargetException.class, ex.getCause().getClass());
     }
 
     @Test
     @DisplayName("Execute: templates mixed args")
     @SneakyThrows
-    void execute_4() {
+    void execute_5() {
         var paramName1 = "stringArg";
         var paramName2 = "listArg";
         var paramName3 = "mapArg";
@@ -216,7 +234,9 @@ class ActionTest {
         when(render.render(eq("stringArg"), any())).thenReturn("stringArg");
         when(render.render(eq("listArg"), any())).thenReturn("listArg");
 
-        var action = new Action(new ActionProps(methodName, arguments, resultVarName), container);
+        var action = new Action(
+                new ActionProps(methodName, arguments, resultVarName), gateway, executorChecker, executorLoader
+        );
         var actualResult = action.execute(updateData);
 
         assertEquals(result, actualResult);

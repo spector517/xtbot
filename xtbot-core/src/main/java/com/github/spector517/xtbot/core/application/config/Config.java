@@ -1,7 +1,6 @@
 package com.github.spector517.xtbot.core.application.config;
 
-import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
-import com.github.spector517.xtbot.core.properties.LoadPropertiesException;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.properties.Properties;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -13,26 +12,22 @@ import java.util.List;
 @Accessors(fluent = true)
 public class Config {
 
-    private final int version;
-    private final String botToken;
     private final List<Stage> stages;
     
-    private final ComponentsContainer container;
     private final Stage initialStage;
     private final Stage failStage;
 
-    public Config(ComponentsContainer container) {
-        this.container = container;
-        final Properties props;
-        try {
-            props = container.propertiesLoader().load();
-        } catch (LoadPropertiesException e) {
-            throw new LoadConfigException(e);
-        }
-        this.version = props.version();
-        this.botToken = props.botToken();
+    public Config(Gateway gateway) {
+        var props = gateway.getProperties();
         this.stages = props.stages().stream()
-                .map(stageProps -> new Stage(stageProps, container))
+                .map(stageProps -> new Stage(
+                        stageProps,
+                        gateway,
+                        gateway.getAcceptorChecker(),
+                        gateway.getAcceptorLoader(),
+                        gateway.getExecutorChecker(),
+                        gateway.getExecutorLoader()
+                ))
                 .toList();
         checkDuplicateStages();
         initialStage = getInitialStage();

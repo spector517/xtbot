@@ -9,11 +9,13 @@ import java.util.Objects;
 
 import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.annotation.Name;
-import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorNotFoundException;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
+import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.utils.CommonUtils;
 import com.github.spector517.xtbot.core.properties.ActionProps;
 
@@ -28,8 +30,8 @@ public class Action {
             String.class, Boolean.class, Integer.class, Long.class, Double.class
     );
 
-    private final ComponentsContainer container;
-    private final Mapper<UpdateData, Map<String, Object>> contextMapper;
+    private final Mapper<Map<String, Object>, UpdateData> contextMapper;
+    private final Gateway gateway;
 
     private final Method exec;
     private final Map<String, Object> templateArgs;
@@ -38,14 +40,14 @@ public class Action {
     @Getter
     private final String name;
 
-    Action(ActionProps props, ComponentsContainer container) {
-        this.container = container;
-        this.contextMapper = container.updateDataToContextMapper();
-        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(props.args(), container.render());
+    Action(ActionProps props, Gateway gateway, ExecutorChecker executorChecker, ExecutorLoader executorLoader) {
+        this.contextMapper = gateway.getContextMapper();
+        this.gateway = gateway;
+        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(props.args(), gateway.getRender());
         this.register = Objects.requireNonNullElse(props.register(), "");
         try {
-            var executor = container.executorLoader().getExecutor(props.exec());
-            container.executorChecker().checkExecutor(executor, props.args());
+            var executor = executorLoader.getExecutor(props.exec());
+            executorChecker.checkExecutor(executor, props.args());
             this.exec = executor;
             this.name = executor.getAnnotation(Executor.class).value();
         } catch (ExecutorNotFoundException | ExecutorCheckFailedException ex) {
@@ -64,8 +66,10 @@ public class Action {
             if (isSimpleMapping) {
                 return result;
             }
-            var mappingClass = exec.getReturnType().isAssignableFrom(List.class) ? List.class : Map.class;
-            return container.jsonObjectMapper().convertValue(result, mappingClass);
+            var mappingClass = exec.getReturnType().isAssignableFrom(List.class) || exec.getReturnType().isArray()
+                    ? List.class
+                    : Map.class;
+            return gateway.getActionResultMapper().map(result, mappingClass);
         } catch (Exception ex) {
             throw new ActionExecutionException(ex);
         }
@@ -84,3 +88,4 @@ public class Action {
         return parameter.getName();
     }
 }
+

@@ -3,10 +3,7 @@ package com.github.spector517.xtbot.core.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
-import com.github.spector517.xtbot.core.application.repository.ClientNotFoundException;
-import com.github.spector517.xtbot.core.application.repository.ClientRepository;
-
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -25,7 +22,6 @@ public class InternalClientRepository implements ClientRepository {
             return clients.get(index);
         }
         var msg = "Client with external id '%s' not found in repository".formatted(externalId);
-        log.debug(msg);
         throw new ClientNotFoundException(msg);
     }
 

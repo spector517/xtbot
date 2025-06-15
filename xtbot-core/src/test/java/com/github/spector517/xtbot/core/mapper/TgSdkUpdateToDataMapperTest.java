@@ -2,12 +2,9 @@ package com.github.spector517.xtbot.core.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.*;
-import com.github.spector517.xtbot.core.application.mapper.ClientEntityToDataMapper;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
-import com.github.spector517.xtbot.core.application.mapper.MappingException;
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
-import com.github.spector517.xtbot.core.application.repository.ClientNotFoundException;
-import com.github.spector517.xtbot.core.application.repository.ClientRepository;
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
+import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
+import com.github.spector517.xtbot.core.repository.ClientRepository;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +31,7 @@ class TgSdkUpdateToDataMapperTest {
     private final String initialStageName = "initial";
     private final String messageText = "text";
     private final String callbackData = "data";
-    private final Mapper<ClientEntity, ClientData> clientEntityToDataMapper = 
+    private final Mapper<ClientData, ClientEntity> clientEntityToDataMapper =
         new ClientEntityToDataMapper(objectMapper);
 
     private final ClientRepository clientRepository = Mockito.mock(ClientRepository.class);
@@ -79,13 +76,11 @@ class TgSdkUpdateToDataMapperTest {
     @SneakyThrows
     void testMapToData_0() {
         var update = getUpdate(Type.MESSAGE);
-        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper)
-            .initialStageName(initialStageName);
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
         var expectedUpdateData = prefilledUpdateData
-                .message(
-                        new MessageData()
-                                .id(messageId)
-                                .text(messageText)
+                .message(new MessageData()
+                        .id(messageId)
+                        .text(messageText)
                 )
                 .type(Type.MESSAGE);
 
@@ -99,8 +94,7 @@ class TgSdkUpdateToDataMapperTest {
     @SneakyThrows
     void testMapToData_1() {
         var update = getUpdate(Type.CALLBACK);
-        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper)
-            .initialStageName(initialStageName);
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
         var expectedUpdateData = prefilledUpdateData
                 .callback(
                         new CallbackData()
@@ -118,8 +112,7 @@ class TgSdkUpdateToDataMapperTest {
     @SneakyThrows
     void testMapToData_2() {
         var update = getUpdate(null);
-        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper)
-            .initialStageName(initialStageName);
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
 
         var exception = assertThrows(MappingException.class, () -> sdkMapper.map(update));
 
@@ -133,8 +126,7 @@ class TgSdkUpdateToDataMapperTest {
         when(clientRepository.findByExternalId(externalId))
             .thenThrow(ClientNotFoundException.class);
         var update = getUpdate(Type.MESSAGE);
-        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper)
-            .initialStageName(initialStageName);
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
         var expectedUpdateData = new UpdateData()
                 .client(new ClientData()
                         .externalId(externalId)

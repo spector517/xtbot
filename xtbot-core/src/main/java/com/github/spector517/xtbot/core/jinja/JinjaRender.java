@@ -38,12 +38,6 @@ public class JinjaRender implements Render {
 
     @Override
     public boolean isTemplate(String template) {
-        var res = template != null && JINJA_FIND_PATTERN.matcher(template).find();
-        if (res) {
-            log.debug("String '{}' is template", template);
-        } else {
-            log.debug("String '{}' is not template", template);
-        }
-        return res;
+        return template != null && JINJA_FIND_PATTERN.matcher(template).find();
     }
 }

@@ -1,4 +1,6 @@
-package com.github.spector517.xtbot.core.application.repository;
+package com.github.spector517.xtbot.core.repository;
+
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 
 public interface ClientRepository {
 

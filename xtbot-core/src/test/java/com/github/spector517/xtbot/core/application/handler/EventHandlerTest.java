@@ -1,56 +1,34 @@
 package com.github.spector517.xtbot.core.application.handler;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import com.github.spector517.xtbot.core.application.config.*;
+import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
+import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
+import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
+import com.github.spector517.xtbot.core.mapper.Mapper;
+import com.github.spector517.xtbot.core.repository.ClientRepository;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
-import com.github.spector517.xtbot.core.application.config.Acceptor;
-import com.github.spector517.xtbot.core.application.config.AcceptorExecutionException;
-import com.github.spector517.xtbot.core.application.config.Action;
-import com.github.spector517.xtbot.core.application.config.Button;
-import com.github.spector517.xtbot.core.application.config.Config;
-import com.github.spector517.xtbot.core.application.config.Message;
-import com.github.spector517.xtbot.core.application.config.ParseMode;
-import com.github.spector517.xtbot.core.application.config.Stage;
-import com.github.spector517.xtbot.core.application.config.Template;
-import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
-import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
-import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
-import com.github.spector517.xtbot.core.application.gateway.Gateway;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
-import com.github.spector517.xtbot.core.application.repository.ClientRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import lombok.SneakyThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
 class EventHandlerTest {
     
-    private ComponentsContainer componentsContainer;
-    private Gateway<Object> gateway;
+    private Gateway gateway;
     private Config config;
 
-    private Mapper<Object, UpdateData> sdkMapper;
-    private Mapper<UpdateData, Map<String, Object>> contextMapper;
-    private Mapper<ClientData, ClientEntity> entityMapper;
-    private ClientRepository repository;
+    private Mapper<Map<String, Object>, UpdateData> contextMapper;
 
     private String firstStageName;
     private String firstStageMessageText;
@@ -60,25 +38,16 @@ class EventHandlerTest {
     private String secondStageName;
     private String secondStageMessageText;
     private String failStageName;
-    private Stage secondStage;
-    private Stage failStage;
 
     @BeforeEach
     @SneakyThrows
     void setUp() {
-        componentsContainer = mock(ComponentsContainer.class);
-        
-        sdkMapper = mock(Mapper.class);
         contextMapper = mock(Mapper.class);
         when(contextMapper.map(any(UpdateData.class))).thenReturn(Map.of());
-        entityMapper = mock(Mapper.class);
-        repository = mock(ClientRepository.class);
-        when(componentsContainer.tgSdkUpdateToDataMapper()).thenReturn(sdkMapper);
-        when(componentsContainer.updateDataToContextMapper()).thenReturn(contextMapper);
-        when(componentsContainer.clientDataToEntityMapper()).thenReturn(entityMapper);
-        when(componentsContainer.clientRepository()).thenReturn(repository);
 
         gateway = mock(Gateway.class);
+        when(gateway.getContextMapper()).thenReturn(contextMapper);
+
         config = mock(Config.class);
         firstStageName = "stage1";
         firstStageMessageText = "stage1_message";
@@ -87,7 +56,6 @@ class EventHandlerTest {
         secondStageName = "stage2";
         secondStageMessageText = "stage2_message";
         failStageName = "fail_stage";
-
 
         var firstStageMessageTemplate = mock(Template.class);
         var firstStageButtonDisplayNameTemplate = mock(Template.class);
@@ -118,13 +86,13 @@ class EventHandlerTest {
         when(secondStageMessage.text()).thenReturn(Optional.of(secondStageMessageTemplate));
         when(secondStageMessage.parseMode()).thenReturn(ParseMode.PLAIN_TEXT);
         when(secondStageMessage.buttons()).thenReturn(List.of());
-        secondStage = mock(Stage.class);
+        var secondStage = mock(Stage.class);
         when(secondStage.message()).thenReturn(Optional.of(secondStageMessage));
         when(secondStage.next()).thenReturn(Optional.empty());
         when(secondStage.name()).thenReturn(secondStageName);
         when(config.getStage(secondStageName)).thenReturn(secondStage);
 
-        failStage = mock(Stage.class);
+        var failStage = mock(Stage.class);
         when(failStage.message()).thenReturn(Optional.empty());
         when(failStage.name()).thenReturn(failStageName);
         when(config.failStage()).thenReturn(failStage);
@@ -142,8 +110,6 @@ class EventHandlerTest {
             .chatId(11)
             .client(clientData);
         var outputCaptor = ArgumentCaptor.forClass(OutputData.class);
-        var update = new Object();
-        when(sdkMapper.map(update)).thenReturn(updateData);
         when(gateway.produce(outputCaptor.capture())).thenReturn(1111);
         var expectedOutput = new OutputData()
             .chatId(11)
@@ -156,11 +122,10 @@ class EventHandlerTest {
             )))
             .previousSendedMessageId(111);
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(contextMapper, times(2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
-        verify(repository).save(any());
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(1111, clientData.previousSendedMessageId());
         assertTrue(clientData.currentStageInitiated());
@@ -179,18 +144,15 @@ class EventHandlerTest {
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
-        var update = new Object();
-        when(sdkMapper.map(update)).thenReturn(updateData);
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(true);
         when(firstStage.acceptors()).thenReturn(List.of(acceptor));
         when(firstStage.actions()).thenReturn(List.of());
         when(firstStage.next()).thenReturn(Optional.empty());
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(contextMapper, times(3)).map(any(UpdateData.class));
-        verify(repository).save(any());
         verify(gateway, never()).produce(any(OutputData.class));
         assertEquals(Map.of("key1", "val1"), clientData.additionalVars());
         assertTrue(clientData.currentStageCompleted());
@@ -207,16 +169,13 @@ class EventHandlerTest {
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
-        var update = new Object();
-        when(sdkMapper.map(update)).thenReturn(updateData);
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(false);
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(gateway, never()).produce(any(OutputData.class));
         verify(contextMapper).map(any(UpdateData.class));
-        verify(repository, never()).save(any());
     }
 
     @Test
@@ -232,13 +191,11 @@ class EventHandlerTest {
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
-        var update = new Object();
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(true);
         var action = mock(Action.class);
         when(action.execute(any(UpdateData.class))).thenReturn(true);
         when(action.register()).thenReturn("register");
-        when(sdkMapper.map(update)).thenReturn(updateData);
         when(firstStage.acceptors()).thenReturn(List.of(acceptor));
         when(firstStage.actions()).thenReturn(List.of(action));
         var outputCaptor = ArgumentCaptor.forClass(OutputData.class);
@@ -250,10 +207,9 @@ class EventHandlerTest {
             .removeButtons(true)
             .previousSendedMessageId(111);
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
-        verify(repository, times(2)).save(any());
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         assertEquals(secondStageName, clientData.currentStage());
@@ -276,8 +232,6 @@ class EventHandlerTest {
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
-        var update = new Object();
-        when(sdkMapper.map(update)).thenReturn(updateData);
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class)))
             .thenThrow(new AcceptorExecutionException(new Exception()));
@@ -289,11 +243,10 @@ class EventHandlerTest {
             .removeButtons(true)
             .previousSendedMessageId(111);
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
-        verify(repository).save(any());
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(111, clientData.previousSendedMessageId());
         assertEquals(clientData.currentStage(), failStageName);
@@ -310,14 +263,12 @@ class EventHandlerTest {
             .additionalVars(Map.of());
         var updateData = new UpdateData()
             .client(clientData);
-        var update = new Object();
-        when(sdkMapper.map(update)).thenReturn(updateData);
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(false);
         when(firstStage.autocomplete()).thenReturn(true);
         when(firstStage.actions()).thenReturn(List.of());
 
-        new TestEventHandler(update, config, componentsContainer, gateway).run();
+        new EventHandler(config, gateway, updateData).call();
 
         verify(gateway, times(2 + 2)).produce(any(OutputData.class));
         assertEquals(secondStageName, clientData.currentStage());

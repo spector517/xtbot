@@ -3,7 +3,6 @@ package com.github.spector517.xtbot.core.mapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.*;
-import com.github.spector517.xtbot.core.application.mapper.MappingException;
 import com.github.spector517.xtbot.core.context.Context;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package com.github.spector517.xtbot.core.application.repository;
+package com.github.spector517.xtbot.core.repository;
 
 public class ClientNotFoundException extends Exception {
 

@@ -6,14 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @RequiredArgsConstructor
-public class YamlFilePropertiesLoader implements PropertiesLoader {
+public class YamlFilePropertiesLoader {
 
     private final String yamlPropsLocation;
     private final ObjectMapper yamlObjectMapper;
 
     private Properties properties;
 
-    @Override
     public Properties load() throws LoadPropertiesException {
         if (properties != null) {
             return properties;

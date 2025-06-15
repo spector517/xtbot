@@ -1,46 +1,42 @@
 package com.github.spector517.xtbot.core.application.handler;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.config.Config;
 import com.github.spector517.xtbot.core.application.config.Stage;
+import com.github.spector517.xtbot.core.application.config.StageNotFoundException;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
-import com.github.spector517.xtbot.core.application.mapper.MappingException;
-
+import com.github.spector517.xtbot.core.mapper.MappingException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 @Slf4j
 @RequiredArgsConstructor
-public abstract class EventHandler<T> implements Runnable {
+public class EventHandler implements Callable<UpdateData> {
 
-    private final T updateEvent;
     private final Config config;
-    private final ComponentsContainer container;
-    private final Gateway<T> gateway;
+    private final Gateway gateway;
+    private final UpdateData updateData;
 
-    private UpdateData updateData;
     private Map<String, Object> context;
     private Stage stage;
 
     @Override
     @SneakyThrows
-    public void run() {
+    public UpdateData call() {
         try {
-            updateData = container.tgSdkUpdateToDataMapper().map(updateEvent);
             stage = config.getStage(updateData.client().currentStage());
             updateMDC();
-        } catch (Exception ex) {
-            logException(ex);
-            clearMDC();
-            throw ex;
+        } catch (StageNotFoundException e) {
+            log.error("Stage not found in config");
+            throw e;
         }
 
         log.info("Start event processing...");
@@ -48,12 +44,14 @@ public abstract class EventHandler<T> implements Runnable {
         try {
             process();
         } catch(Exception ex) {
-            logException(ex);
+            log.warn("Event processing failed: {}", ex.getMessage());
+            log.debug("Stack trace:", ex);
+            log.warn("Trying to bind fail stage...");
             try {
                 bindFailStage();
                 process();
             } catch(Exception e) {
-                logException(e);
+                log.error("Fatal error during event processing: {}", e.getMessage());
                 clearMDC();
                 throw e;
             }
@@ -61,6 +59,7 @@ public abstract class EventHandler<T> implements Runnable {
 
         log.info("Event processed.");
         clearMDC();
+        return updateData;
     }
 
     private void process() throws GatewayException, MappingException {
@@ -120,7 +119,6 @@ public abstract class EventHandler<T> implements Runnable {
         }
         updateData.client().currentStageInitiated(true);
         updateContext();
-        saveToRepo();
         log.info("Stage initiated.");
     }
 
@@ -160,7 +158,6 @@ public abstract class EventHandler<T> implements Runnable {
         updateData.client().currentStageCompleted(true);
         updateData.client().registerCompletedStage(stage.name());
         updateContext();
-        saveToRepo();
         log.info("Stage completed.");
     }
 
@@ -210,14 +207,10 @@ public abstract class EventHandler<T> implements Runnable {
     }
 
     private void updateContext() throws MappingException {
-        context = container.updateDataToContextMapper().map(updateData);
+        context = gateway.getContextMapper().map(updateData);
         updateMDC();
     }
 
-    private void saveToRepo() throws MappingException {
-        var entity = container.clientDataToEntityMapper().map(updateData.client());
-        container.clientRepository().save(entity);
-    }
 
     private void updateMDC() {
         MDCLogManager.put(updateData.client());
@@ -225,10 +218,5 @@ public abstract class EventHandler<T> implements Runnable {
 
     private void clearMDC() {
         MDCLogManager.clear();
-    }
-
-    private void logException(Exception ex) {
-        log.error(ex.getMessage());
-        log.debug("Exception occurred", ex);
     }
 }

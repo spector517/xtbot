@@ -3,12 +3,10 @@ package com.github.spector517.xtbot.core.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
-import com.github.spector517.xtbot.core.application.repository.ClientNotFoundException;
 
 import lombok.SneakyThrows;
 

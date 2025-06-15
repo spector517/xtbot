@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,21 +24,20 @@ import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorC
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorChecker;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorLoader;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorNotFoundException;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
+import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.container.DefaultComponentsContainer;
 import com.github.spector517.xtbot.core.properties.AcceptorProps;
 
 import lombok.SneakyThrows;
 
 class AcceptorTest {
 
-    private DefaultComponentsContainer container;
+    private Gateway gateway;
     private AcceptorProps acceptorProps;
-
     private AcceptorLoader acceptorLoader;
     private AcceptorChecker acceptorChecker;
-    private Mapper<UpdateData, Update> apiMapper;
+
+    private Mapper<Update, UpdateData> apiMapper;
     private String methodName;
     private Method method;
     private UpdateData updateData;
@@ -70,21 +70,19 @@ class AcceptorTest {
         apiMapper = mock(Mapper.class);
         when(apiMapper.map(updateData)).thenReturn(update);
 
-        Mapper<UpdateData, Map<String, Object>> contextMapper = mock(Mapper.class);
+        Mapper<Map<String, Object>, UpdateData> contextMapper = mock(Mapper.class);
 
-        container = mock(DefaultComponentsContainer.class);
-        when(container.acceptorLoader()).thenReturn(acceptorLoader);
-        when(container.acceptorChecker()).thenReturn(acceptorChecker);
-        when(container.render()).thenReturn(render);
-        when(container.updateDataToApiMapper()).thenReturn(apiMapper);
-        when(container.updateDataToContextMapper()).thenReturn(contextMapper);
+        gateway = mock(Gateway.class);
+        when(gateway.getRender()).thenReturn(render);
+        when(gateway.getApiMapper()).thenReturn(apiMapper);
+        when(gateway.getContextMapper()).thenReturn(contextMapper);
     }
 
     @Test
     @DisplayName("Constructor: Success create Acceptor")
     @SneakyThrows
     void constructor_0() {
-        new Acceptor(acceptorProps, container);
+        new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader);
 
         verify(acceptorLoader).getAcceptor(methodName);
         verify(acceptorChecker).checkAcceptor(method);
@@ -98,7 +96,7 @@ class AcceptorTest {
 
         var ex = assertThrows(
                 LoadConfigException.class,
-                () -> new Acceptor(acceptorProps, container)
+                () -> new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader)
         );
 
         assertEquals(AcceptorNotFoundException.class, ex.getCause().getClass());
@@ -112,7 +110,7 @@ class AcceptorTest {
 
         var ex = assertThrows(
                 LoadConfigException.class,
-                () -> new Acceptor(acceptorProps, container)
+                () -> new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader)
         );
 
         assertEquals(AcceptorCheckFailedException.class, ex.getCause().getClass());
@@ -124,7 +122,7 @@ class AcceptorTest {
     void accept_0() {
         when(apiMapper.map(updateData)).thenReturn(update);
 
-        var acceptor = new Acceptor(acceptorProps, container);
+        var acceptor = new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader);
         var accepted = acceptor.accept(updateData);
 
         verify(method).invoke(null, update, acceptorProps.val());
@@ -138,7 +136,7 @@ class AcceptorTest {
         when(method.invoke(null, update, acceptorProps.val()))
                 .thenThrow(new InvocationTargetException(new Exception()));
 
-        var acceptor = new Acceptor(acceptorProps, container);
+        var acceptor = new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader);
         var accepted = acceptor.accept(updateData);
 
         verify(method).invoke(null, update, acceptorProps.val());

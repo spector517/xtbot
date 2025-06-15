@@ -2,32 +2,23 @@ package com.github.spector517.xtbot.core.mapper;
 
 import com.github.spector517.xtbot.core.application.data.inbound.*;
 import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
-import com.github.spector517.xtbot.core.application.mapper.MappingException;
-import com.github.spector517.xtbot.core.application.repository.ClientEntity;
-import com.github.spector517.xtbot.core.application.repository.ClientNotFoundException;
-import com.github.spector517.xtbot.core.application.repository.ClientRepository;
-
+import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
+import com.github.spector517.xtbot.core.repository.ClientRepository;
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.List;
 import java.util.Map;
 
-@RequiredArgsConstructor
-@Accessors(fluent = true)
 @Slf4j
-public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
+@RequiredArgsConstructor
+public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
 
     private final ClientRepository clientRepository;
-    private final Mapper<ClientEntity, ClientData> mapper;
-
-    @Setter
-    private String initialStageName;
+    private final Mapper<ClientData, ClientEntity> mapper;
+    private final String initialStageName;
 
     public static long getClientId(Update update) throws MappingException {
         var clientId =  switch (getUpdateType(update)) {
@@ -39,7 +30,7 @@ public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
     }
 
     @Override
-    public UpdateData map(Update update) throws MappingException {
+    public UpdateData map(Update update, Object... ignored) throws MappingException {
         if (initialStageName == null) {
             var msg = "Initial stage name is not set";
             log.debug(msg);
@@ -94,8 +85,6 @@ public class TgSdkUpdateToDataMapper implements Mapper<Update, UpdateData> {
             clientData = createClientData(clientId, user.getUserName());
             MDCLogManager.put(clientData);
             log.info("Created new client");
-        } catch (MappingException ex) {
-            throw ex;
         }
         return clientData;
     }

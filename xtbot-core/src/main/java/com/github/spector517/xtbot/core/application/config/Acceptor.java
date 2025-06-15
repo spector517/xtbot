@@ -4,11 +4,13 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import com.github.spector517.xtbot.api.dto.Update;
-import com.github.spector517.xtbot.core.application.component.ComponentsContainer;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorCheckFailedException;
+import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorChecker;
+import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorLoader;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorNotFoundException;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
+import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.properties.AcceptorProps;
 
 import lombok.Getter;
@@ -19,19 +21,19 @@ public class Acceptor {
 
     private final Method acceptorMethod;
     private final Template valueTemplate;
-    private final Mapper<UpdateData, Update> apiMapper;
-    private final Mapper<UpdateData, Map<String, Object>> contextMapper;
+    private final Mapper<Update, UpdateData> apiMapper;
+    private final Mapper<Map<String, Object>, UpdateData> contextMapper;
     @Getter
     private final String name;
 
 
-    Acceptor(AcceptorProps props, ComponentsContainer container) {
-        this.apiMapper = container.updateDataToApiMapper();
-        this.contextMapper = container.updateDataToContextMapper();
-        this.valueTemplate = new Template(container.render(), props.val());
+    Acceptor(AcceptorProps props, Gateway gateway, AcceptorChecker checker, AcceptorLoader loader) {
+        this.apiMapper = gateway.getApiMapper();
+        this.contextMapper = gateway.getContextMapper();
+        this.valueTemplate = new Template(gateway.getRender(), props.val());
         try {
-            var acceptor = container.acceptorLoader().getAcceptor(props.acceptor());
-            container.acceptorChecker().checkAcceptor(acceptor);
+            var acceptor = loader.getAcceptor(props.acceptor());
+            checker.checkAcceptor(acceptor);
             this.acceptorMethod = acceptor;
             this.name = acceptor.getAnnotation(
                 com.github.spector517.xtbot.api.annotation.Acceptor.class

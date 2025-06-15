@@ -5,13 +5,11 @@ import com.github.spector517.xtbot.api.dto.Client;
 import com.github.spector517.xtbot.api.dto.Message;
 import com.github.spector517.xtbot.api.dto.Update;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
-import com.github.spector517.xtbot.core.application.mapper.Mapper;
-import com.github.spector517.xtbot.core.application.mapper.MappingException;
 
-public class UpdateDataToBotApiMapper implements Mapper<UpdateData, Update> {
+public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
 
     @Override
-    public Update map(UpdateData updateData) throws MappingException {
+    public Update map(UpdateData updateData, Object... ignored) throws MappingException {
         var clientData = updateData.client();
         var client = new Client(
                 clientData.externalId(),

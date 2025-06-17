@@ -1,6 +1,8 @@
 package com.github.spector517.xtbot.core.properties;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum DatabaseType {
-    H2,
-    POSTGRES
+    @JsonProperty("internal") INTERNAL,
+    @JsonProperty("h2") H2
 }

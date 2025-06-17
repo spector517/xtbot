@@ -8,10 +8,9 @@ import com.github.spector517.xtbot.core.jinja.JinjaRender;
 import com.github.spector517.xtbot.core.loader.ExternalJarClassLoader;
 import com.github.spector517.xtbot.core.loader.InternalClassLoader;
 import com.github.spector517.xtbot.core.mapper.*;
-import com.github.spector517.xtbot.core.properties.LoadPropertiesException;
-import com.github.spector517.xtbot.core.properties.Properties;
-import com.github.spector517.xtbot.core.properties.StageProps;
-import com.github.spector517.xtbot.core.properties.YamlFilePropertiesLoader;
+import com.github.spector517.xtbot.core.properties.*;
+import com.github.spector517.xtbot.core.repository.ClientRepository;
+import com.github.spector517.xtbot.core.repository.H2ClientRepository;
 import com.github.spector517.xtbot.core.repository.InternalClientRepository;
 import com.github.spector517.xtbot.core.telegram.api.sdk.TelegramSdkApiBot;
 import com.github.spector517.xtbot.core.telegram.api.token.PropsBotAuthLoader;
@@ -20,6 +19,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.nio.file.Path;
 import java.util.concurrent.Executors;
 
 @Slf4j
@@ -65,7 +65,7 @@ public class Telegram {
                 )
                 .name();
         var objectMapper = new ObjectMapper();
-        var repository = new InternalClientRepository();
+        var repository = createRepository(properties);
         var sdkMapper = new TgSdkUpdateToDataMapper(
                 repository,
                 new ClientEntityToDataMapper(objectMapper),
@@ -102,5 +102,11 @@ public class Telegram {
             log.debug("Stack trace", e);
             System.exit(-2);
         }
+    }
+
+    private static ClientRepository createRepository(Properties properties) {
+        return properties.database().type() == DatabaseType.H2
+                ? new H2ClientRepository(Path.of(properties.database().h2().directory()))
+                : new InternalClientRepository();
     }
 }

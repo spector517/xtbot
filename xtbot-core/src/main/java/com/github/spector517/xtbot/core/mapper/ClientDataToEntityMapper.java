@@ -20,13 +20,18 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
     @Override
     public ClientEntity map(ClientData clientData, Object... ignored) throws MappingException {
         return new ClientEntity()
-                .id(clientData.id())
-                .externalId(clientData.externalId())
+                .externalId(clientData.externalId() == 0
+                        ? null
+                        : clientData.externalId()
+                )
                 .name(clientData.name())
                 .currentStage(clientData.currentStage())
                 .currentStageInitiated(clientData.currentStageInitiated())
                 .currentStageCompleted(clientData.currentStageCompleted())
-                .previousSendedMessageId(clientData.previousSendedMessageId())
+                .previousSendedMessageId(clientData.previousSendedMessageId() == 0
+                        ? null
+                        : clientData.previousSendedMessageId()
+                )
                 .previousStages(mapToJson(clientData.previousStages()))
                 .additionalVars(mapToJson(clientData.additionalVars()))
                 .stageVars(mapToJson(clientData.stageVars()));

@@ -26,7 +26,10 @@ public class ClientEntityToDataMapper implements Mapper<ClientData, ClientEntity
                 .currentStage(clientEntity.currentStage())
                 .currentStageInitiated(clientEntity.currentStageInitiated())
                 .currentStageCompleted(clientEntity.currentStageCompleted())
-                .previousSendedMessageId(clientEntity.previousSendedMessageId());
+                .previousSendedMessageId(clientEntity.previousSendedMessageId() == null
+                        ? 0
+                        : clientEntity.previousSendedMessageId()
+                );
 
         var previousStages = mapFromJson(clientEntity.previousStages(), new TypeReference<List<String>>(){});
         clientData.previousStages(previousStages != null ? previousStages : List.of());

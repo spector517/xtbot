@@ -12,10 +12,10 @@ public class ClientEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "external_id", unique = true, nullable = false)
-    private long externalId;
+    private Long externalId;
 
     @Column(name = "name")
     private String name;
@@ -24,20 +24,20 @@ public class ClientEntity {
     private String currentStage;
 
     @Column(name = "previous_sended_message_id")
-    private int previousSendedMessageId;
+    private Integer previousSendedMessageId;
 
-    @Column(name = "previous_stages")
+    @Column(name = "previous_stages", columnDefinition = "TEXT")
     private String previousStages;
 
     @Column(name = "stage_initiated")
-    private boolean currentStageInitiated;
+    private Boolean currentStageInitiated;
 
     @Column(name = "stage_completed")
-    private boolean currentStageCompleted;
+    private Boolean currentStageCompleted;
 
-    @Column(name = "additional_vars")
+    @Column(name = "additional_vars", columnDefinition = "TEXT")
     private String additionalVars;
 
-    @Column(name = "stage_vars")
+    @Column(name = "stage_vars", columnDefinition = "TEXT")
     private String stageVars;
 }

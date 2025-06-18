@@ -17,7 +17,7 @@ public class UpdateDataToContextMapper implements Mapper<Map<String, Object>, Up
     public Map<String, Object> map(UpdateData updateData, Object... ignored) throws MappingException {
         var context = new Context(updateData);
         try {
-            return mapper.convertValue(context, new TypeReference<Map<String, Object>>() {});
+            return mapper.convertValue(context, new TypeReference<>(){});
         } catch (Exception ex) {
             throw new MappingException(ex);
         }

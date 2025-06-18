@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,15 +21,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.spector517.xtbot.api.annotation.Acceptor;
 import com.github.spector517.xtbot.api.annotation.Executor;
-import com.github.spector517.xtbot.api.dto.Update;
-import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorChecker;
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorLoader;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.properties.LoadPropertiesException;
 import com.github.spector517.xtbot.core.properties.Properties;
 import com.github.spector517.xtbot.core.properties.StageProps;
 
@@ -41,8 +37,6 @@ class ConfigTest {
 
     private Gateway gateway;
 
-    private Mapper<Update, UpdateData> apiDataMapper;
-    private Mapper<Map<String, Object>, UpdateData> contextDataMapper;
     private Properties properties;
 
     @BeforeEach

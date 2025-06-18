@@ -58,8 +58,8 @@ public class JSchSshConnector implements SshConnector {
             }
 
             var exitCode = commandChannel.getExitStatus();
-            var stdOut = new String(stdOutStream.toByteArray(), StandardCharsets.UTF_8);
-            var stdErr = new String(stdErrStream.toByteArray(), StandardCharsets.UTF_8);
+            var stdOut = stdOutStream.toString(StandardCharsets.UTF_8);
+            var stdErr = stdErrStream.toString(StandardCharsets.UTF_8);
             return new SshCommandResult(exitCode, stdOut, stdErr);
         } catch (JSchException ex) {
             throw new SshConnectorException(ex);

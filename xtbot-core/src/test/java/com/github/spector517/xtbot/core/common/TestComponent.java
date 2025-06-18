@@ -44,7 +44,9 @@ public class TestComponent {
             boolean isMale,
             List<String> cars,
             Map<String, Object> data
-    ) {}
+    ) {
+        throw new UnsupportedOperationException("Unsupported call test executor");
+    }
 
     @Executor("exec5")
     private static void execute(
@@ -68,6 +70,6 @@ public class TestComponent {
 
     @Acceptor("acc1")
     public void accept(Update update, String val) {
-        throw new UnsupportedOperationException("Unsupported call test acceptor");
+        throw new UnsupportedOperationException("Unsupported call test acceptor: %s, %s".formatted(update, val));
     }
 }

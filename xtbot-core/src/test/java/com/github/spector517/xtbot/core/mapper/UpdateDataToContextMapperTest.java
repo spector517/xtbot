@@ -33,8 +33,8 @@ class UpdateDataToContextMapperTest {
         var currentStage = "stage3";
         var previousSendedMessageId = 123;
         var previousStages = List.of("stage1", "stage2");
-        var stageVars = Map.of("key1", (Object)"value1", "key2", (Object) "value2");
-        var additionalVars = Map.of("key3", (Object) "value3", "key4", (Object) "value4");
+        var stageVars = Map.of("key1", "value1", "key2", (Object) "value2");
+        var additionalVars = Map.of("key3", "value3", "key4", (Object) "value4");
         var messageId = 1111;
         var messageText = "test";
         var clientData = new ClientData()

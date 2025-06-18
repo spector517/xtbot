@@ -35,7 +35,6 @@ class ClientEntityToDataMapperTest {
         previousSendedMessageId = 123;
         previousStages = List.of("Stage1", "Stage2");
         additionalVars = Map.of("key1", "value1");
-        Map.of("key2", "value2");
         clientEntityToDataMapper = new ClientEntityToDataMapper(objectMapper);
     }
 

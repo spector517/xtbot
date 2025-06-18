@@ -5,6 +5,7 @@ import com.github.spector517.xtbot.api.annotation.BotComponent;
 import com.github.spector517.xtbot.api.annotation.Executor;
 import lombok.experimental.UtilityClass;
 
+@SuppressWarnings("SameReturnValue")
 @BotComponent
 @UtilityClass
 public class TestBotComponent {

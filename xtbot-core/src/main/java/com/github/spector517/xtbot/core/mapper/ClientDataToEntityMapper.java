@@ -18,7 +18,7 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
     private final ObjectMapper objectMapper;
 
     @Override
-    public ClientEntity map(ClientData clientData, Object... ignored) throws MappingException {
+    public ClientEntity map(ClientData clientData, Object... ignored) {
         return new ClientEntity()
                 .externalId(clientData.externalId() == 0
                         ? null

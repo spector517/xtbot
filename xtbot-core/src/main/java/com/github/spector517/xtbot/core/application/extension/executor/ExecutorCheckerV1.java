@@ -1,10 +1,7 @@
 package com.github.spector517.xtbot.core.application.extension.executor;
 
-import com.github.spector517.xtbot.api.annotation.Name;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

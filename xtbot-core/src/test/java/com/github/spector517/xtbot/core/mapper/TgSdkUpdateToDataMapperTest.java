@@ -178,9 +178,7 @@ class TgSdkUpdateToDataMapperTest {
                 callback.setFrom(user);
                 update.setCallbackQuery(callback);
             }
-            case null -> {
-                update.setMessageReaction(new MessageReactionUpdated());
-            }
+            case null -> update.setMessageReaction(new MessageReactionUpdated());
         }
         return update;
     }

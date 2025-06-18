@@ -9,7 +9,7 @@ import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
 
     @Override
-    public Update map(UpdateData updateData, Object... ignored) throws MappingException {
+    public Update map(UpdateData updateData, Object... ignored) {
         var clientData = updateData.client();
         var client = new Client(
                 clientData.externalId(),

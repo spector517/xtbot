@@ -2,7 +2,6 @@ package com.github.spector517.xtbot.core.application.handler;
 
 import com.github.spector517.xtbot.core.application.config.Config;
 import com.github.spector517.xtbot.core.application.config.Stage;
-import com.github.spector517.xtbot.core.application.config.StageNotFoundException;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
@@ -29,12 +28,7 @@ public class EventHandler implements Runnable {
     @Override
     @SneakyThrows
     public void run() {
-        try {
-            stage = config.getStage(updateData.client().currentStage());
-        } catch (StageNotFoundException e) {
-            throw e;
-        }
-
+        stage = config.getStage(updateData.client().currentStage());
         try {
             process();
         } catch(Exception ex) {

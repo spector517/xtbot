@@ -7,7 +7,6 @@ import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
 
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;

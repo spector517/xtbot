@@ -1,7 +1,6 @@
 package com.github.spector517.xtbot.core.application.config;
 
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
-import com.github.spector517.xtbot.core.properties.Properties;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 

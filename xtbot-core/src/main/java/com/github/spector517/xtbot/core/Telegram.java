@@ -13,7 +13,7 @@ import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.H2ClientRepository;
 import com.github.spector517.xtbot.core.repository.InternalClientRepository;
 import com.github.spector517.xtbot.core.telegram.api.sdk.TelegramSdkApiBot;
-import com.github.spector517.xtbot.core.telegram.api.token.PropsBotAuthLoader;
+import com.github.spector517.xtbot.core.telegram.api.auth.PropsBotAuthLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;

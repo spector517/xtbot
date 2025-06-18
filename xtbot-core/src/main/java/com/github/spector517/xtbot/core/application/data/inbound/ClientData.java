@@ -30,7 +30,7 @@ public class ClientData {
     public Optional<String> getPreviousStage() {
         return previousStages.isEmpty()
             ? Optional.empty()
-            : Optional.of(previousStages.get(previousStages.size() - 1));
+            : Optional.of(previousStages.getLast());
     }
 
     public void registerCompletedStage(String stageName) {

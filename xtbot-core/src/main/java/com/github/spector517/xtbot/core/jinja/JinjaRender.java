@@ -13,9 +13,13 @@ import java.util.regex.Pattern;
 @Slf4j
 public class JinjaRender implements Render {
 
-    private static final Pattern JINJA_FIND_PATTERN = Pattern.compile("\\{\\{.*}}");
+    private static final Pattern JINJA_FIND_PATTERN;
+
+    static {
+        JINJA_FIND_PATTERN = Pattern.compile("\\{\\{.*?}}|\\{%.*?%}|\\{#.*?#}", Pattern.DOTALL);
+    }
     
-    private Jinjava jinjava;
+    private final Jinjava jinjava;
 
     public JinjaRender() {
         this.jinjava = new Jinjava();
@@ -25,19 +29,24 @@ public class JinjaRender implements Render {
     @Override
     public String render(String template, Map<String, Object> context) throws RenderException {
         try {
-            log.debug("Render '{}' with context '{}'", template, context);
+            log.trace("Render '{}' with context '{}'", template, context);
             var res = jinjava.render(template, context);
-            log.debug("Rendered successfully");
+            log.trace("Rendered successfully");
             return res;
         } catch (Exception ex) {
-            log.warn("Render error: {}", ex.getMessage());
-            log.debug("Exception occurred", ex);
+            log.error("Render error: {}", ex.getMessage());
             throw new RenderException(ex);
         }
     }
 
     @Override
     public boolean isTemplate(String template) {
-        return template != null && JINJA_FIND_PATTERN.matcher(template).find();
+        var res = template != null && JINJA_FIND_PATTERN.matcher(template).find();
+        if (res) {
+            log.trace("Template detected: '{}'", template);
+        } else {
+            log.trace("Not a template: '{}'", template);
+        }
+        return res;
     }
 }

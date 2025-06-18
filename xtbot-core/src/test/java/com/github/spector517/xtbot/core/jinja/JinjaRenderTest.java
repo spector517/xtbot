@@ -31,8 +31,20 @@ class JinjaRenderTest {
     }
 
     @Test
-    @DisplayName("Render: Invalid template")
+    @DisplayName("Render: success multiline")
+    @SneakyThrows
     void render_1() {
+        var template = "Hello {{ \nname }}!";
+        var context = Map.of("name", (Object) "Bob");
+
+        var result = jinjaRender.render(template, context);
+
+        assertEquals("Hello Bob!", result);
+    }
+
+    @Test
+    @DisplayName("Render: Invalid template")
+    void render_2() {
         var template = "Hello {% if name.test %}!";
         var context = Map.of("name", (Object) "");
         assertThrows(RenderException.class, () -> jinjaRender.render(template, context));
@@ -41,7 +53,7 @@ class JinjaRenderTest {
     @Test
     @DisplayName("Render: render with escape MarkdownV2 filter")
     @SneakyThrows
-    void render_2() {
+    void render_3() {
         var template = "Hello {{ name | escape_md2 }}!";
         var context = Map.of("name", (Object) "Alex*");
 
@@ -70,5 +82,13 @@ class JinjaRenderTest {
     @DisplayName("Is template: null value")
     void isTemplate_2() {
         assertFalse(jinjaRender.isTemplate(null));
+    }
+
+    @Test
+    @DisplayName("")
+    void isTemplate_3() {
+        var template = "{% for name, url in clients.items() -%}some data\n{% endfor -%}";
+
+        assertTrue(jinjaRender.isTemplate(template));
     }
 }

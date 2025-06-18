@@ -10,10 +10,7 @@ import java.util.Objects;
 import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.annotation.Name;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorNotFoundException;
+import com.github.spector517.xtbot.core.application.extension.executor.*;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.utils.CommonUtils;
@@ -39,6 +36,7 @@ public class Action {
     private final String register;
     @Getter
     private final String name;
+    private final ParameterNameDetector parameterNameDetector;
 
     Action(ActionProps props, Gateway gateway, ExecutorChecker executorChecker, ExecutorLoader executorLoader) {
         this.contextMapper = gateway.getContextMapper();
@@ -53,6 +51,7 @@ public class Action {
         } catch (ExecutorNotFoundException | ExecutorCheckFailedException ex) {
             throw new LoadConfigException(ex);
         }
+        this.parameterNameDetector = new DefaultParameterNameDetector();
     }
 
     public Object execute(UpdateData updateData) {
@@ -77,15 +76,8 @@ public class Action {
 
     private Object[] getArgs(Map<String, Object> args) {
         return Arrays.stream(exec.getParameters())
-                .map(parameter -> args.get(getParameterName(parameter)))
+                .map(parameter -> args.get(parameterNameDetector.getParameterName(parameter)))
                 .toArray();
-    }
-
-    private String getParameterName(Parameter parameter) {
-        if (parameter.isAnnotationPresent(Name.class)) {
-            return parameter.getAnnotation(Name.class).value();
-        }
-        return parameter.getName();
     }
 }
 

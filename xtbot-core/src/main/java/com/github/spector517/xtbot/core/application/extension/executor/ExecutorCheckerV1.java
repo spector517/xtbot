@@ -31,6 +31,12 @@ public class ExecutorCheckerV1 implements ExecutorChecker {
             PRIMITIVES_MAP.values(), REFERENCE_TYPES, CONTAINER_TYPES
     ).flatMap(Collection::stream).toList();
 
+    private final ParameterNameDetector parameterNameDetector;
+
+    public ExecutorCheckerV1() {
+        this.parameterNameDetector = new DefaultParameterNameDetector();
+    }
+
     @Override
     public void checkExecutor(Method method, Map<String, Object> arguments) throws ExecutorCheckFailedException {
         checkMethodModifiers(method);
@@ -40,7 +46,9 @@ public class ExecutorCheckerV1 implements ExecutorChecker {
 
     private void checkArgumentsNames(Method method, Map<String, Object> arguments)
             throws ExecutorCheckFailedException {
-        var actualNames = Stream.of(method.getParameters()).map(this::getParameterName).toList();
+        var actualNames = Stream.of(method.getParameters())
+                .map(this.parameterNameDetector::getParameterName)
+                .toList();
         var expectedNames = arguments.keySet();
         var missing = actualNames.stream().filter(name -> !expectedNames.contains(name)).toList();
         var unknown = expectedNames.stream().filter(name ->!actualNames.contains(name)).toList();
@@ -68,7 +76,7 @@ public class ExecutorCheckerV1 implements ExecutorChecker {
         throws ExecutorCheckFailedException 
     {
         for (var parameter : method.getParameters()) {
-            var parameterName = getParameterName(parameter);
+            var parameterName = parameterNameDetector.getParameterName(parameter);
             var argument = arguments.get(parameterName);
             var expectedType = parameter.getType().isPrimitive()
                     ? PRIMITIVES_MAP.get(parameter.getType())
@@ -104,12 +112,5 @@ public class ExecutorCheckerV1 implements ExecutorChecker {
                 "Executor method '%s' must be static".formatted(method.getName())
             );
         }
-    }
-
-    private String getParameterName(Parameter parameter) {
-        if (parameter.isAnnotationPresent(Name.class)) {
-            return parameter.getAnnotation(Name.class).value();
-        }
-        return parameter.getName();
     }
 }

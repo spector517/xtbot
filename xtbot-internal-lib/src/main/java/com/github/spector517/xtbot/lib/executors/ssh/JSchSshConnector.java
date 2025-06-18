@@ -36,6 +36,7 @@ public class JSchSshConnector implements SshConnector {
         bindSession();
     }
 
+    @SuppressWarnings("BusyWait")
     @Override
     public SshCommandResult runCommand(String command) throws SshConnectorException {
         try {

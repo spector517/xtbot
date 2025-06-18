@@ -7,7 +7,6 @@ import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.gateway.GatewayException;
-import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
 import com.github.spector517.xtbot.core.mapper.MappingException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,7 +32,6 @@ public class EventHandler implements Callable<UpdateData> {
     public UpdateData call() {
         try {
             stage = config.getStage(updateData.client().currentStage());
-            updateMDC();
         } catch (StageNotFoundException e) {
             log.error("Stage not found in config");
             throw e;
@@ -52,13 +50,11 @@ public class EventHandler implements Callable<UpdateData> {
                 process();
             } catch(Exception e) {
                 log.error("Fatal error during event processing: {}", e.getMessage());
-                clearMDC();
                 throw e;
             }
         }
 
         log.info("Event processed.");
-        clearMDC();
         return updateData;
     }
 
@@ -183,11 +179,10 @@ public class EventHandler implements Callable<UpdateData> {
             nextStage = config.failStage();
         }
         stage = nextStage;
+        log.info("Next stage is '{}'", stage.name());
         updateData.client().currentStageInitiated(false);
         updateData.client().currentStageCompleted(false);
         updateData.client().currentStage(nextStage.name());
-
-        log.info("Next stage is '{}'", stage.name());
         return true;
     }
 
@@ -208,15 +203,5 @@ public class EventHandler implements Callable<UpdateData> {
 
     private void updateContext() throws MappingException {
         context = gateway.getContextMapper().map(updateData);
-        updateMDC();
-    }
-
-
-    private void updateMDC() {
-        MDCLogManager.put(updateData.client());
-    }
-
-    private void clearMDC() {
-        MDCLogManager.clear();
     }
 }

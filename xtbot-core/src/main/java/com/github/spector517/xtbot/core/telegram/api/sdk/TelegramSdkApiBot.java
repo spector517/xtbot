@@ -10,10 +10,10 @@ import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorL
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.gateway.GatewayException;
-import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.mapper.MappingException;
+import com.github.spector517.xtbot.core.mapper.TgSdkUpdateToDataMapper;
 import com.github.spector517.xtbot.core.properties.Properties;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
@@ -95,26 +96,28 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     }
 
     @Override
-    public void onUpdateReceived(org.telegram.telegrambots.meta.api.objects.Update update) {
+    public synchronized void onUpdateReceived(org.telegram.telegrambots.meta.api.objects.Update update) {
         try {
-            var updateData = sdkMapper.map(update);
-            var clientId = updateData.client().externalId();
+            var clientId = TgSdkUpdateToDataMapper.getClientId(update);
+            MDC.put(ClientData.EXTERNAL_ID_KEY, String.valueOf(clientId));
             if (inProgressEvents.containsKey(clientId)) {
                 log.warn("Client has uncompleted events. Skipping.");
                 return;
             }
 
+            var updateData = sdkMapper.map(update);
             var handler = consume(updateData, config);
             var wrappedHandler = wrapHandler(handler, updateData);
             log.info("Submitting event");
             inProgressEvents.put(clientId, executorService.submit(wrappedHandler));
 
-            MDCLogManager.clear();
         } catch (MappingException ex) {
             log.warn("Failed mapping update to data: {}", ex.getMessage());
         } catch (GatewayException ex) {
             log.error("Error while handler creation {}", ex.getMessage());
             log.debug("Stack trace:", ex);
+        } finally {
+            MDC.clear();
         }
     }
 
@@ -182,8 +185,10 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     }
 
     private Callable<UpdateData> wrapHandler(Callable<UpdateData> handler, UpdateData updateData) {
+        var mdsContext = MDC.getCopyOfContextMap();
         return () -> {
             try {
+                MDC.setContextMap(mdsContext);
                 var data = handler.call();
                 var entity = toEntityMapper.map(data.client());
                 clientRepository.save(entity);
@@ -194,6 +199,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 throw ex;
             } finally {
                 inProgressEvents.remove(updateData.client().externalId());
+                MDC.clear();
             }
         };
     }
@@ -204,6 +210,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .chatId(outputData.chatId())
                 .build();
         try {
+            log.debug("Sending typing action");
             execute(chatAction);
         } catch (TelegramApiException ex) {
             log.error("Sending typing action error");
@@ -214,6 +221,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     private void removeButtons(OutputData outputData) throws GatewayException {
         if (outputData.removeButtons()) {
             try {
+                log.debug("Removing buttons");
                 execute(EditMessageReplyMarkup.builder()
                         .chatId(outputData.chatId())
                         .messageId(outputData.previousSendedMessageId())
@@ -233,6 +241,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .chatId(outputData.chatId());
         getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::replyMarkup);
         try {
+            log.debug("Sending message");
             return execute(sendMessage.build()).getMessageId();
         } catch (Exception ex) {
             log.error("Sending message error");
@@ -258,6 +267,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .messageId(outputData.messageId());
         getInlineKeyboardMarkup(outputData).ifPresent(editMessage::replyMarkup);
         try {
+            log.debug("Editing message");
             execute(editMessage.build());
             return outputData.messageId();
         } catch (Exception ex) {
@@ -272,6 +282,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .messageId(outputData.messageId());
         getInlineKeyboardMarkup(outputData).ifPresent(editButtons::replyMarkup);
         try {
+            log.debug("Editing buttons");
             execute(editButtons.build());
             return outputData.messageId();
         } catch (Exception ex) {
@@ -285,6 +296,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .chatId(outputData.chatId())
                 .messageId(outputData.deleteMessageId());
         try {
+            log.debug("Deleting message");
             execute(deleteMessage.build());
         } catch (Exception ex) {
             log.error("Deleting message error");

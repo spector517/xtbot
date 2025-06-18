@@ -1,7 +1,6 @@
 package com.github.spector517.xtbot.core.mapper;
 
 import com.github.spector517.xtbot.core.application.data.inbound.*;
-import com.github.spector517.xtbot.core.application.logger.MDCLogManager;
 import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
@@ -75,15 +74,12 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
             case CALLBACK -> update.getCallbackQuery().getFrom();
         };
         var clientId = getClientId(update);
-        MDCLogManager.putClientId(clientId);
         ClientData clientData;
         try {
             clientData = mapper.map(clientRepository.findByExternalId(clientId));
-            MDCLogManager.put(clientData);
         } catch (ClientNotFoundException ex) {
             log.debug("Creating new client data");
             clientData = createClientData(clientId, user.getUserName());
-            MDCLogManager.put(clientData);
             log.info("Created new client");
         }
         return clientData;

@@ -60,6 +60,11 @@ public class TestComponent {
         throw new UnsupportedOperationException("Unsupported call test executor");
     }
 
+    @Executor("exec7")
+    public static void execute() {
+        throw new UnsupportedOperationException("Unsupported call test executor");
+    }
+
 
     @Acceptor("acc1")
     public void accept(Update update, String val) {

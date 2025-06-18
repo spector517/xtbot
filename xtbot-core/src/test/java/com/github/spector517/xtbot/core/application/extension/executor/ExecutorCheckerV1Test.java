@@ -202,6 +202,14 @@ class ExecutorCheckerV1Test {
                 ex.getMessage()
         );
     }
+
+    @Test
+    @DisplayName("No arguments")
+    void checkExecutor_11() {
+        var method = getTestExecutor();
+        var checker = new ExecutorCheckerV1();
+        assertDoesNotThrow(() -> checker.checkExecutor(method, Map.of()));
+    }
     
 
     @SneakyThrows

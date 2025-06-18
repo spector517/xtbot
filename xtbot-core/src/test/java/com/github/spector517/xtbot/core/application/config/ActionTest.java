@@ -247,4 +247,22 @@ class ActionTest {
             Map.of("render3", "render4")
         );
     }
+
+    @Test
+    @DisplayName("Execute: no args")
+    @SneakyThrows
+    void execute_6() {
+        var expectedResult = "result";
+        when(method.getParameters()).thenReturn(new Parameter[0]);
+        when(method.getReturnType()).thenReturn((Class) String.class);
+        when(method.invoke(null)).thenReturn(expectedResult);
+
+        var action = new Action(
+                new ActionProps(methodName, null, resultVarName),gateway, executorChecker, executorLoader
+        );
+        var actualResult = action.execute(updateData);
+
+        assertEquals(expectedResult, actualResult);
+        verify(method).invoke(null);
+    }
 }

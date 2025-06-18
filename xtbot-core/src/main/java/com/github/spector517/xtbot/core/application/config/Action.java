@@ -41,11 +41,12 @@ public class Action {
     Action(ActionProps props, Gateway gateway, ExecutorChecker executorChecker, ExecutorLoader executorLoader) {
         this.contextMapper = gateway.getContextMapper();
         this.gateway = gateway;
-        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(props.args(), gateway.getRender());
+        Map<String, Object> execArgs = props.args() == null ? Map.of() : props.args();
+        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(execArgs, gateway.getRender());
         this.register = Objects.requireNonNullElse(props.register(), "");
         try {
             var executor = executorLoader.getExecutor(props.exec());
-            executorChecker.checkExecutor(executor, props.args());
+            executorChecker.checkExecutor(executor, execArgs);
             this.exec = executor;
             this.name = executor.getAnnotation(Executor.class).value();
         } catch (ExecutorNotFoundException | ExecutorCheckFailedException ex) {

@@ -12,14 +12,12 @@ import com.github.spector517.xtbot.core.application.handler.EventHandler;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.properties.Properties;
-import lombok.NonNull;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public interface Gateway {
 
-    default Callable<UpdateData> consume(UpdateData updateData, Config config) throws GatewayException {
+    default Runnable consume(UpdateData updateData, Config config) throws GatewayException {
         try {
             return new EventHandler(config, this, updateData);
         } catch (Exception e) {

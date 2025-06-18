@@ -56,7 +56,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     private final Render render;
     private final CommonMethodsLoader commonMethodsLoader;
 
-    private final Map<Long, Future<UpdateData>> inProgressEvents;
+    private final Map<Long, Future<?>> inProgressEvents;
     private final Config config;
 
     @Data
@@ -184,23 +184,19 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         return 0;
     }
 
-    private Callable<UpdateData> wrapHandler(Callable<UpdateData> handler, UpdateData updateData) {
+    private Runnable wrapHandler(Runnable handler, UpdateData updateData) {
         var mdsContext = MDC.getCopyOfContextMap();
         return () -> {
             try {
                 MDC.setContextMap(mdsContext);
                 log.info("Starting event processing");
-                var data = handler.call();
-                var entity = toEntityMapper.map(data.client());
-                clientRepository.save(entity);
-                log.info("Event processing completed successfully");
-                return data;
-            } catch (Exception ex) {
+                handler.run();
                 var entity = toEntityMapper.map(updateData.client());
                 clientRepository.save(entity);
+                log.info("Event processing completed successfully");
+            } catch (Exception ex) {
                 log.error("Event processing failed: {}", ex.getMessage());
                 log.debug("Stack trace:", ex);
-                throw ex;
             } finally {
                 inProgressEvents.remove(updateData.client().externalId());
                 MDC.clear();

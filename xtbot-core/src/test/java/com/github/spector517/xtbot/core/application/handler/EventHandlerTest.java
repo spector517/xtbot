@@ -6,7 +6,6 @@ import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.mapper.Mapper;
-import com.github.spector517.xtbot.core.repository.ClientRepository;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -122,7 +121,7 @@ class EventHandlerTest {
             )))
             .previousSendedMessageId(111);
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
@@ -150,7 +149,7 @@ class EventHandlerTest {
         when(firstStage.actions()).thenReturn(List.of());
         when(firstStage.next()).thenReturn(Optional.empty());
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(3)).map(any(UpdateData.class));
         verify(gateway, never()).produce(any(OutputData.class));
@@ -172,7 +171,7 @@ class EventHandlerTest {
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(false);
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(gateway, never()).produce(any(OutputData.class));
         verify(contextMapper).map(any(UpdateData.class));
@@ -207,7 +206,7 @@ class EventHandlerTest {
             .removeButtons(true)
             .previousSendedMessageId(111);
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
@@ -243,7 +242,7 @@ class EventHandlerTest {
             .removeButtons(true)
             .previousSendedMessageId(111);
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
@@ -268,7 +267,7 @@ class EventHandlerTest {
         when(firstStage.autocomplete()).thenReturn(true);
         when(firstStage.actions()).thenReturn(List.of());
 
-        new EventHandler(config, gateway, updateData).call();
+        new EventHandler(config, gateway, updateData).run();
 
         verify(gateway, times(2 + 2)).produce(any(OutputData.class));
         assertEquals(secondStageName, clientData.currentStage());

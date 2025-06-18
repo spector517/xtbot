@@ -14,11 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 @Slf4j
 @RequiredArgsConstructor
-public class EventHandler implements Callable<UpdateData> {
+public class EventHandler implements Runnable {
 
     private final Config config;
     private final Gateway gateway;
@@ -29,7 +28,7 @@ public class EventHandler implements Callable<UpdateData> {
 
     @Override
     @SneakyThrows
-    public UpdateData call() {
+    public void run() {
         try {
             stage = config.getStage(updateData.client().currentStage());
         } catch (StageNotFoundException e) {
@@ -44,8 +43,6 @@ public class EventHandler implements Callable<UpdateData> {
             bindFailStage();
             process();
         }
-
-        return updateData;
     }
 
     private void process() throws GatewayException, MappingException {

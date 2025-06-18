@@ -31,9 +31,7 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
     @Override
     public UpdateData map(Update update, Object... ignored) throws MappingException {
         if (initialStageName == null) {
-            var msg = "Initial stage name is not set";
-            log.debug(msg);
-            throw new MappingException(msg);
+            throw new MappingException("Initial stage name is not set");
         }
         var updateType = getUpdateType(update);
         var clientData = getClientData(update, updateType);
@@ -80,7 +78,7 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
         } catch (ClientNotFoundException ex) {
             log.debug("Creating new client data");
             clientData = createClientData(clientId, user.getUserName());
-            log.info("Created new client");
+            log.debug("Created new client");
         }
         return clientData;
     }

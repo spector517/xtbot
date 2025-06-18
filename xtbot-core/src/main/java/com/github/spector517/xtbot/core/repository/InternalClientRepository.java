@@ -21,8 +21,9 @@ public class InternalClientRepository implements ClientRepository {
         if (index != -1) {
             return clients.get(index);
         }
-        var msg = "Client with external id '%s' not found in repository".formatted(externalId);
-        throw new ClientNotFoundException(msg);
+        throw new ClientNotFoundException(
+                "Client with external id '%s' not found in repository".formatted(externalId)
+        );
     }
 
     @Override

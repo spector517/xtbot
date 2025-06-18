@@ -52,43 +52,50 @@ public class Telegram {
         } catch (LoadPropertiesException e) {
             log.error("Failed to load properties from {}: {}", yamlPropsLocation, e.getMessage());
             log.debug("Stack trace", e);
-            System.exit(1);
+            System.exit(-2);
             return null;
         }
     }
 
     private static TelegramSdkApiBot createBot(Properties properties) {
-        var initialStageName = properties.stages().stream()
-                .filter(StageProps::initial)
-                .findAny().orElseThrow(() ->
-                        new IllegalStateException("No initial stage found")
-                )
-                .name();
-        var objectMapper = new ObjectMapper();
-        var repository = createRepository(properties);
-        var sdkMapper = new TgSdkUpdateToDataMapper(
-                repository,
-                new ClientEntityToDataMapper(objectMapper),
-                initialStageName
-        );
-        var commonMethodsLoader = properties.externalJarFilePath() == null || properties.externalJarFilePath().isBlank()
-                ? new CommonMethodsLoader(new InternalClassLoader())
-                : new CommonMethodsLoader(
-                        new InternalClassLoader(), new ExternalJarClassLoader(properties.externalJarFilePath()
-                ));
-        var parameters = new TelegramSdkApiBot.Parameters()
-                .botAuthLoader(new PropsBotAuthLoader(properties))
-                .executorService(Executors.newVirtualThreadPerTaskExecutor())
-                .clientRepository(repository)
-                .properties(properties)
-                .sdkMapper(sdkMapper)
-                .contextMapper(new UpdateDataToContextMapper(objectMapper))
-                .apiMapper(new UpdateDataToBotApiMapper())
-                .actionResultMapper(new ObjectToClassMapper(objectMapper))
-                .toEntityMapper(new ClientDataToEntityMapper(objectMapper))
-                .render(new JinjaRender())
-                .commonMethodsLoader(commonMethodsLoader);
-        return new TelegramSdkApiBot(parameters);
+        try {
+            var initialStageName = properties.stages().stream()
+                    .filter(StageProps::initial)
+                    .findAny().orElseThrow(() ->
+                            new IllegalStateException("No initial stage found")
+                    )
+                    .name();
+            var objectMapper = new ObjectMapper();
+            var repository = createRepository(properties);
+            var sdkMapper = new TgSdkUpdateToDataMapper(
+                    repository,
+                    new ClientEntityToDataMapper(objectMapper),
+                    initialStageName
+            );
+            var commonMethodsLoader = properties.externalJarFilePath() == null || properties.externalJarFilePath().isBlank()
+                    ? new CommonMethodsLoader(new InternalClassLoader())
+                    : new CommonMethodsLoader(
+                    new InternalClassLoader(), new ExternalJarClassLoader(properties.externalJarFilePath()
+            ));
+            var parameters = new TelegramSdkApiBot.Parameters()
+                    .botAuthLoader(new PropsBotAuthLoader(properties))
+                    .executorService(Executors.newVirtualThreadPerTaskExecutor())
+                    .clientRepository(repository)
+                    .properties(properties)
+                    .sdkMapper(sdkMapper)
+                    .contextMapper(new UpdateDataToContextMapper(objectMapper))
+                    .apiMapper(new UpdateDataToBotApiMapper())
+                    .actionResultMapper(new ObjectToClassMapper(objectMapper))
+                    .toEntityMapper(new ClientDataToEntityMapper(objectMapper))
+                    .render(new JinjaRender())
+                    .commonMethodsLoader(commonMethodsLoader);
+            return new TelegramSdkApiBot(parameters);
+        } catch (Exception e) {
+            log.error("Failed to create bot: {}", e.getMessage());
+            log.debug("Stack trace", e);
+            System.exit(-3);
+            return null;
+        }
     }
 
     private static void registerBot(TelegramSdkApiBot bot) {
@@ -100,11 +107,14 @@ public class Telegram {
         } catch (TelegramApiException e) {
             log.error("Failed to register bot: {}", e.getMessage());
             log.debug("Stack trace", e);
-            System.exit(-2);
+            System.exit(-4);
         }
     }
 
     private static ClientRepository createRepository(Properties properties) {
+        if (properties.database() == null) {
+            return new InternalClientRepository();
+        }
         return properties.database().type() == DatabaseType.H2
                 ? new H2ClientRepository(Path.of(properties.database().h2().directory()))
                 : new InternalClientRepository();

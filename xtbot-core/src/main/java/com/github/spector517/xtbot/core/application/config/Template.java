@@ -18,13 +18,15 @@ import java.util.Objects;
 @Slf4j
 public class Template {
 
+    public static final String DEFAULT_VALUE = "";
+
     private final Render render;
     private final String rawValue;
     private final boolean needRender;
 
     public Template(Render render, String rawValue) {
         this.render = Objects.requireNonNull(render);
-        this.rawValue = Objects.requireNonNullElse(rawValue, "");
+        this.rawValue = Objects.requireNonNullElse(rawValue, DEFAULT_VALUE);
         this.needRender = render.isTemplate(rawValue);
     }
 
@@ -33,9 +35,9 @@ public class Template {
             try {
                 return render.render(rawValue, context);
             } catch (RenderException ex) {
-                log.warn("Render error, using default value");
-                log.debug("Exception occurred: ", ex);
-                return "";
+                log.debug("Render error, using default value");
+                log.debug("Stack trace: ", ex);
+                return DEFAULT_VALUE;
             }
         }
         return rawValue;

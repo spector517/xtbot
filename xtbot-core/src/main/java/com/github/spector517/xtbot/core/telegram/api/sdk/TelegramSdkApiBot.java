@@ -189,13 +189,17 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         return () -> {
             try {
                 MDC.setContextMap(mdsContext);
+                log.info("Starting event processing");
                 var data = handler.call();
                 var entity = toEntityMapper.map(data.client());
                 clientRepository.save(entity);
+                log.info("Event processing completed successfully");
                 return data;
             } catch (Exception ex) {
                 var entity = toEntityMapper.map(updateData.client());
                 clientRepository.save(entity);
+                log.error("Event processing failed: {}", ex.getMessage());
+                log.debug("Stack trace:", ex);
                 throw ex;
             } finally {
                 inProgressEvents.remove(updateData.client().externalId());

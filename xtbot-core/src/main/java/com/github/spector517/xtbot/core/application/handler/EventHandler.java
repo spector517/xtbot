@@ -33,28 +33,18 @@ public class EventHandler implements Callable<UpdateData> {
         try {
             stage = config.getStage(updateData.client().currentStage());
         } catch (StageNotFoundException e) {
-            log.error("Stage not found in config");
             throw e;
         }
-
-        log.info("Start event processing...");
 
         try {
             process();
         } catch(Exception ex) {
             log.warn("Event processing failed: {}", ex.getMessage());
-            log.debug("Stack trace:", ex);
             log.warn("Trying to bind fail stage...");
-            try {
-                bindFailStage();
-                process();
-            } catch(Exception e) {
-                log.error("Fatal error during event processing: {}", e.getMessage());
-                throw e;
-            }
+            bindFailStage();
+            process();
         }
 
-        log.info("Event processed.");
         return updateData;
     }
 
@@ -75,7 +65,7 @@ public class EventHandler implements Callable<UpdateData> {
     }
 
     private void initiateStage() throws GatewayException, MappingException {
-        log.info("Initiating stage...");
+        log.debug("Initiating stage...");
         sendTyping();
         updateContext();
         var output = new OutputData().chatId(updateData.chatId());
@@ -115,7 +105,7 @@ public class EventHandler implements Callable<UpdateData> {
         }
         updateData.client().currentStageInitiated(true);
         updateContext();
-        log.info("Stage initiated.");
+        log.debug("Stage initiated.");
     }
 
     private void sendTyping() throws GatewayException {
@@ -138,7 +128,7 @@ public class EventHandler implements Callable<UpdateData> {
             log.warn("Update not accepted. Skipped.");
             return;
         }
-        log.info("Completing stage...");
+        log.debug("Completing stage...");
 
         updateData.client().stageVars(new HashMap<>());
         stage.actions().forEach(action -> {
@@ -154,7 +144,7 @@ public class EventHandler implements Callable<UpdateData> {
         updateData.client().currentStageCompleted(true);
         updateData.client().registerCompletedStage(stage.name());
         updateContext();
-        log.info("Stage completed.");
+        log.debug("Stage completed.");
     }
 
     private void bindAdditionalVars() throws MappingException {
@@ -167,7 +157,7 @@ public class EventHandler implements Callable<UpdateData> {
     }
 
     private boolean bindNextStage() {
-        log.info("Binding next stage");
+        log.debug("Binding next stage");
         Stage nextStage;
         try {
             if (stage.next().isEmpty()) {
@@ -179,7 +169,7 @@ public class EventHandler implements Callable<UpdateData> {
             nextStage = config.failStage();
         }
         stage = nextStage;
-        log.info("Next stage is '{}'", stage.name());
+        log.debug("Next stage is '{}'", stage.name());
         updateData.client().currentStageInitiated(false);
         updateData.client().currentStageCompleted(false);
         updateData.client().currentStage(nextStage.name());
@@ -191,14 +181,14 @@ public class EventHandler implements Callable<UpdateData> {
         if (previousStageOptional.isEmpty() || !previousStageOptional.get().equals(stage.name())) {
             updateData.client().registerCompletedStage(stage.name());
         }
-        log.info("Binding fail stage");
+        log.debug("Binding fail stage");
         stage = config.failStage();
 
         updateData.client().currentStageInitiated(false);
         updateData.client().currentStageCompleted(false);
         updateData.client().currentStage(stage.name());
 
-        log.info("Fail stage bound");
+        log.debug("Fail stage bound");
     }
 
     private void updateContext() throws MappingException {

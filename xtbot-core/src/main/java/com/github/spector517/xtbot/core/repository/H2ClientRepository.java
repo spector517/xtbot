@@ -51,9 +51,7 @@ public class H2ClientRepository implements ClientRepository {
             var client = getClientByExternalId(externalId, session);
             if (client.isEmpty()) {
                 transaction.commit();
-                var msg = "Client with externalId %d not found".formatted(externalId);
-                log.debug(msg);
-                throw new ClientNotFoundException(msg);
+                throw new ClientNotFoundException("Client with externalId %d not found".formatted(externalId));
             }
             transaction.commit();
             return client.get();

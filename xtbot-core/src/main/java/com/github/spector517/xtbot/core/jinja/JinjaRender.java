@@ -29,12 +29,11 @@ public class JinjaRender implements Render {
     @Override
     public String render(String template, Map<String, Object> context) throws RenderException {
         try {
-            log.trace("Render '{}' with context '{}'", template, context);
+            log.debug("Render '{}' with context '{}'", template, context);
             var res = jinjava.render(template, context);
-            log.trace("Rendered successfully");
+            log.debug("Rendered successfully");
             return res;
         } catch (Exception ex) {
-            log.error("Render error: {}", ex.getMessage());
             throw new RenderException(ex);
         }
     }
@@ -43,9 +42,9 @@ public class JinjaRender implements Render {
     public boolean isTemplate(String template) {
         var res = template != null && JINJA_FIND_PATTERN.matcher(template).find();
         if (res) {
-            log.trace("Template detected: '{}'", template);
+            log.debug("Template detected: '{}'", template);
         } else {
-            log.trace("Not a template: '{}'", template);
+            log.debug("Not a template: '{}'", template);
         }
         return res;
     }

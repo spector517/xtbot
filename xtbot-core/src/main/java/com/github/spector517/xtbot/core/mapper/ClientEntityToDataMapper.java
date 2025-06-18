@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
-@Slf4j
 public class ClientEntityToDataMapper implements Mapper<ClientData, ClientEntity> {
 
     private final ObjectMapper objectMapper;
@@ -49,8 +48,6 @@ public class ClientEntityToDataMapper implements Mapper<ClientData, ClientEntity
         try {
             return objectMapper.readValue(json, typeRef);
         } catch (JsonProcessingException ex) {
-            log.debug("Error mapping '{}' to {}", json, typeRef.getType());
-            log.error("Error mapping client entity to data", ex);
             throw new MappingException(ex);
         }
     }

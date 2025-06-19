@@ -17,13 +17,13 @@ import com.github.spector517.xtbot.core.mapper.TgSdkUpdateToDataMapper;
 import com.github.spector517.xtbot.core.properties.Properties;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
-import com.github.spector517.xtbot.core.telegram.api.auth.BotAuthLoader;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.client.AbstractTelegramClient;
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -32,8 +32,10 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageRe
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,9 +43,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 @Slf4j
-public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway {
+public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer, Gateway {
 
-    private final BotAuthLoader botAuthLoader;
+    private final AbstractTelegramClient telegramClient;
     private final ExecutorService executorService;
     private final ClientRepository clientRepository;
     private final Properties properties;
@@ -61,7 +63,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     @Data
     @Accessors(fluent = true, chain = true)
     public static class Parameters {
-        private BotAuthLoader botAuthLoader;
+        private AbstractTelegramClient telegramClient;
         private ExecutorService executorService;
         private ClientRepository clientRepository;
         private Properties properties;
@@ -77,8 +79,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
 
     @SneakyThrows
     public TelegramSdkApiBot(Parameters params) {
-        super(params.botAuthLoader.getToken());
-        this.botAuthLoader = params.botAuthLoader;
+        this.telegramClient = params.telegramClient;
         this.executorService = params.executorService;
         this.clientRepository = params.clientRepository;
         this.properties = params.properties;
@@ -95,8 +96,14 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
     }
 
     @Override
-    public synchronized void onUpdateReceived(org.telegram.telegrambots.meta.api.objects.Update update) {
+    public synchronized void consume(List<org.telegram.telegrambots.meta.api.objects.Update> updates) {
+        updates.forEach(this::consume);
+    }
+
+    @Override
+    public synchronized void consume(org.telegram.telegrambots.meta.api.objects.Update update) {
         try {
+            log.debug("Received update: {}", update);
             var clientId = TgSdkUpdateToDataMapper.getClientId(update);
             MDC.put(ClientData.EXTERNAL_ID_KEY, String.valueOf(clientId));
             if (inProgressEvents.containsKey(clientId)) {
@@ -118,11 +125,6 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         } finally {
             MDC.clear();
         }
-    }
-
-    @Override
-    public String getBotUsername() {
-        return botAuthLoader.getUsername();
     }
 
     @Override
@@ -210,7 +212,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .build();
         try {
             log.debug("Sending typing action");
-            execute(chatAction);
+            telegramClient.execute(chatAction);
         } catch (TelegramApiException ex) {
             log.error("Sending typing action error");
             throw new GatewayException(ex);
@@ -221,7 +223,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         if (outputData.removeButtons()) {
             try {
                 log.debug("Removing buttons");
-                execute(EditMessageReplyMarkup.builder()
+                telegramClient.execute(EditMessageReplyMarkup.builder()
                         .chatId(outputData.chatId())
                         .messageId(outputData.previousSendedMessageId())
                         .build()
@@ -241,7 +243,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::replyMarkup);
         try {
             log.debug("Sending message");
-            return execute(sendMessage.build()).getMessageId();
+            return telegramClient.execute(sendMessage.build()).getMessageId();
         } catch (Exception ex) {
             log.error("Sending message error");
             throw new GatewayException(ex);
@@ -267,7 +269,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         getInlineKeyboardMarkup(outputData).ifPresent(editMessage::replyMarkup);
         try {
             log.debug("Editing message");
-            execute(editMessage.build());
+            telegramClient.execute(editMessage.build());
             return outputData.messageId();
         } catch (Exception ex) {
             log.error("Editing message error");
@@ -282,7 +284,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
         getInlineKeyboardMarkup(outputData).ifPresent(editButtons::replyMarkup);
         try {
             log.debug("Editing buttons");
-            execute(editButtons.build());
+            telegramClient.execute(editButtons.build());
             return outputData.messageId();
         } catch (Exception ex) {
             log.error("Editing buttons error");
@@ -296,7 +298,7 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
                 .messageId(outputData.deleteMessageId());
         try {
             log.debug("Deleting message");
-            execute(deleteMessage.build());
+            telegramClient.execute(deleteMessage.build());
         } catch (Exception ex) {
             log.error("Deleting message error");
             throw new GatewayException(ex);
@@ -305,12 +307,12 @@ public class TelegramSdkApiBot extends TelegramLongPollingBot implements Gateway
 
     private Optional<InlineKeyboardMarkup> getInlineKeyboardMarkup(OutputData outputData) {
         var buttons = outputData.buttons().stream().map(row ->
-                row.stream().map(button ->
+                new InlineKeyboardRow(row.stream().map(button ->
                         InlineKeyboardButton.builder()
                                 .text(button.display())
                                 .callbackData(button.data())
                                 .build()
-                ).toList()
+                ).toList())
         ).toList();
         if (!buttons.isEmpty()) {
             var markup = InlineKeyboardMarkup.builder()

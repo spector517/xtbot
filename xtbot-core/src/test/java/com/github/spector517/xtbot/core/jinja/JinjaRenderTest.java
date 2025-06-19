@@ -1,18 +1,13 @@
 package com.github.spector517.xtbot.core.jinja;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Map;
-
+import com.github.spector517.xtbot.core.application.render.RenderException;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.github.spector517.xtbot.core.application.render.RenderException;
+import java.util.Map;
 
-import lombok.SneakyThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JinjaRenderTest {
 
@@ -85,7 +80,7 @@ class JinjaRenderTest {
     }
 
     @Test
-    @DisplayName("")
+    @DisplayName("Is template: jinja loop")
     void isTemplate_3() {
         var template = "{% for name, url in clients.items() -%}some data\n{% endfor -%}";
 

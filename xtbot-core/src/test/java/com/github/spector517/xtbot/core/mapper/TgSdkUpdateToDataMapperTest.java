@@ -2,16 +2,19 @@ package com.github.spector517.xtbot.core.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.*;
-import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
-
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.chat.Chat;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.reactions.MessageReactionUpdated;
 
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TgSdkUpdateToDataMapperTest {
@@ -154,12 +158,11 @@ class TgSdkUpdateToDataMapperTest {
     private Update getUpdate(Type type) {
         var update = new Update();
 
-        var user = new User();
-        user.setId(externalId);
+        var user = new User(externalId, "Some", false);
         user.setUserName(userName);
 
-        var chat = new Chat();
-        chat.setId(chatId);
+        var chat = mock(Chat.class);
+        when(chat.getId()).thenReturn(chatId);
 
         var message = new Message();
         message.setChat(chat);

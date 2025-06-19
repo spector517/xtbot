@@ -13,17 +13,16 @@ import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.H2ClientRepository;
 import com.github.spector517.xtbot.core.repository.InternalClientRepository;
 import com.github.spector517.xtbot.core.telegram.api.sdk.TelegramSdkApiBot;
-import com.github.spector517.xtbot.core.telegram.api.auth.PropsBotAuthLoader;
 import lombok.extern.slf4j.Slf4j;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class Telegram {
+public class XTelegramBot {
 
     public static final String VERSION = "0.3.0";
 
@@ -34,14 +33,13 @@ public class Telegram {
         yamlObjectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         var properties = loadProperties(args[0], yamlObjectMapper);
         var bot = createBot(properties);
-        registerBot(bot);
-        log.info("XTBot successfully started.");
+        registerAndRunBot(bot, properties.botToken());
     }
 
     private static void checkArguments(String... args) {
         if (args.length != 1) {
             log.error("Invalid number of arguments.");
-            log.error("Usage: java -jar xtbot-core-{} <config.yml>", VERSION);
+            log.error("Usage: java -jar xtbot-core-{} <properties.yml>", VERSION);
             System.exit(-1);
         }
     }
@@ -78,7 +76,7 @@ public class Telegram {
                     new InternalClassLoader(), new ExternalJarClassLoader(properties.externalJarFilePath()
             ));
             var parameters = new TelegramSdkApiBot.Parameters()
-                    .botAuthLoader(new PropsBotAuthLoader(properties))
+                    .telegramClient(new OkHttpTelegramClient(properties.botToken()))
                     .executorService(Executors.newVirtualThreadPerTaskExecutor())
                     .clientRepository(repository)
                     .properties(properties)
@@ -98,16 +96,20 @@ public class Telegram {
         }
     }
 
-    private static void registerBot(TelegramSdkApiBot bot) {
-        try {
+    private static void registerAndRunBot(TelegramSdkApiBot bot, String token) {
+        try(var botApplication = new TelegramBotsLongPollingApplication()) {
             log.info("Registering bot in Telegram...");
-            var botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(bot);
-            log.info("Bot registered successfully.");
+            botApplication.registerBot(token, bot);
+            log.info("XTBot successfully registered and started.");
+            Thread.currentThread().join();
         } catch (TelegramApiException e) {
             log.error("Failed to register bot: {}", e.getMessage());
             log.debug("Stack trace", e);
             System.exit(-4);
+        } catch (Exception e) {
+            log.error("Unknown Telegram SDK error: {}", e.getMessage());
+            log.debug("Stack trace", e);
+            System.exit(-5);
         }
     }
 

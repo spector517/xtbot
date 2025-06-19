@@ -225,7 +225,7 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
                 log.debug("Removing buttons");
                 telegramClient.execute(EditMessageReplyMarkup.builder()
                         .chatId(outputData.chatId())
-                        .messageId(outputData.previousSendedMessageId())
+                        .messageId(outputData.previousSentMessageId())
                         .build()
                 );
             } catch (TelegramApiException ex) {

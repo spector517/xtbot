@@ -16,7 +16,7 @@ public class OutputData {
     private String parseMode;
     private List<List<Button>> buttons = List.of();
     private boolean removeButtons;
-    private int previousSendedMessageId;
+    private int previousSentMessageId;
     private boolean sendTyping;
     
     @Data

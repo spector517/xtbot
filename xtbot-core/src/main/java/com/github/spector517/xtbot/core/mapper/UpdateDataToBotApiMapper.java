@@ -14,9 +14,9 @@ public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
         var client = new Client(
                 clientData.externalId(),
                 clientData.name(),
-                clientData.currentStage(),
-                clientData.currentStageInitiated(),
-                clientData.currentStageCompleted(),
+                clientData.stageName(),
+                clientData.stageInitiated(),
+                clientData.stageCompleted(),
                 clientData.previousStages(),
                 clientData.additionalVars(),
                 clientData.stageVars()

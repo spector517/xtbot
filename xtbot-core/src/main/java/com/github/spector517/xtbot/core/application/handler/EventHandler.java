@@ -28,7 +28,7 @@ public class EventHandler implements Runnable {
     @Override
     @SneakyThrows
     public void run() {
-        stage = config.getStage(updateData.client().currentStage());
+        stage = config.getStage(updateData.client().stageName());
         try {
             process();
         } catch(Exception ex) {
@@ -40,16 +40,16 @@ public class EventHandler implements Runnable {
     }
 
     private void process() throws GatewayException, MappingException {
-        if (!updateData.client().currentStageInitiated()) {
+        if (!updateData.client().stageInitiated()) {
             initiateStage();
             if (stage.autocomplete()) {
                 process();
             }
             return;
         }
-        if (!updateData.client().currentStageCompleted()) {
+        if (!updateData.client().stageCompleted()) {
             completeStage();
-            if (updateData.client().currentStageCompleted() && bindNextStage()) {
+            if (updateData.client().stageCompleted() && bindNextStage()) {
                 process();
             }
         }
@@ -87,14 +87,14 @@ public class EventHandler implements Runnable {
                     && previousStage.removeButtons()
             );
         });
-        output.previousSendedMessageId(updateData.client().previousSendedMessageId());
+        updateData.client().getPreviousSentMessageId().ifPresent(output::previousSentMessageId);
 
         var messageId = gateway.produce(output);
         
         if (messageId != 0) {
-            updateData.client().previousSendedMessageId(messageId);
+            updateData.client().registerSentMessageId(messageId);
         }
-        updateData.client().currentStageInitiated(true);
+        updateData.client().setStageInitiated();
         updateContext();
         log.debug("Stage initiated.");
     }
@@ -128,23 +128,19 @@ public class EventHandler implements Runnable {
             log.debug("Action '{}' result: {}", action.name(), result);
             var resultVar = action.register().isBlank() ? "_" : action.register();
             log.debug("Register action result to var '{}'", resultVar);
-            updateData.client().stageVars().put(resultVar, result);
+            updateData.client().updateStageVars(Map.of(resultVar, result));
         });
         bindAdditionalVars();
 
-        updateData.client().currentStageCompleted(true);
-        updateData.client().registerCompletedStage(stage.name());
+        updateData.client().setStageCompleted();
         updateContext();
         log.debug("Stage completed.");
     }
 
     private void bindAdditionalVars() throws MappingException {
         updateContext();
-        var alreadyExistingAdditionalVars = updateData.client().additionalVars();
         var currentStageAdditionalVars = stage.getAdditionalVars(context);
-        var allAdditionalVars = new HashMap<>(alreadyExistingAdditionalVars);
-        allAdditionalVars.putAll(currentStageAdditionalVars);
-        updateData.client().additionalVars(allAdditionalVars);
+        updateData.client().updateAdditionalVars(currentStageAdditionalVars);
     }
 
     private boolean bindNextStage() {
@@ -161,23 +157,18 @@ public class EventHandler implements Runnable {
         }
         stage = nextStage;
         log.debug("Next stage is '{}'", stage.name());
-        updateData.client().currentStageInitiated(false);
-        updateData.client().currentStageCompleted(false);
-        updateData.client().currentStage(nextStage.name());
+        updateData.client().bindNewStage(stage.name());
         return true;
     }
 
     private void bindFailStage() {
         var previousStageOptional = updateData.client().getPreviousStage();
         if (previousStageOptional.isEmpty() || !previousStageOptional.get().equals(stage.name())) {
-            updateData.client().registerCompletedStage(stage.name());
+            updateData.client().bindNewStage(stage.name());
         }
         log.debug("Binding fail stage");
         stage = config.failStage();
-
-        updateData.client().currentStageInitiated(false);
-        updateData.client().currentStageCompleted(false);
-        updateData.client().currentStage(stage.name());
+        updateData.client().bindNewStage(stage.name());
 
         log.debug("Fail stage bound");
     }

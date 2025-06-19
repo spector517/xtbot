@@ -100,9 +100,9 @@ class EventHandlerTest {
     @SneakyThrows
     void run_0() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
             .previousStages(List.of())
-            .previousSendedMessageId(111);
+            .bindNewStage(firstStageName)
+            .sentMessageIds(List.of(111));
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
@@ -117,15 +117,15 @@ class EventHandlerTest {
                     .display(firstStageButtonDisplayName)
                     .data(firstStageButtonData)
             )))
-            .previousSendedMessageId(111);
+            .previousSentMessageId(111);
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
-        assertEquals(1111, clientData.previousSendedMessageId());
-        assertTrue(clientData.currentStageInitiated());
+        assertEquals(1111, clientData.getPreviousSentMessageId().orElseThrow());
+        assertTrue(clientData.stageInitiated());
     }
 
     @Test
@@ -133,10 +133,10 @@ class EventHandlerTest {
     @SneakyThrows
     void run_1() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
-            .currentStageInitiated(true)
             .previousStages(List.of())
-            .previousSendedMessageId(111)
+            .sentMessageIds(List.of(111))
+            .bindNewStage(firstStageName)
+            .setStageInitiated()
             .additionalVars(Map.of());
         var updateData = new UpdateData()
             .chatId(11)
@@ -152,7 +152,7 @@ class EventHandlerTest {
         verify(contextMapper, times(3)).map(any(UpdateData.class));
         verify(gateway, never()).produce(any(OutputData.class));
         assertEquals(Map.of("key1", "val1"), clientData.additionalVars());
-        assertTrue(clientData.currentStageCompleted());
+        assertTrue(clientData.stageCompleted());
     }
 
     @Test
@@ -160,9 +160,9 @@ class EventHandlerTest {
     @SneakyThrows
     void run_2() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
-            .currentStageInitiated(true)
-            .previousStages(List.of());
+            .previousStages(List.of())
+            .bindNewStage(firstStageName)
+            .setStageInitiated();
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
@@ -180,10 +180,10 @@ class EventHandlerTest {
     @SneakyThrows
     void run_3() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
-            .currentStageInitiated(true)
             .previousStages(List.of())
-            .previousSendedMessageId(111)
+            .sentMessageIds(List.of(111))
+            .bindNewStage(firstStageName)
+            .setStageInitiated()
             .additionalVars(Map.of("key2", "val2"));
         var updateData = new UpdateData()
             .chatId(11)
@@ -202,16 +202,16 @@ class EventHandlerTest {
             .text(secondStageMessageText)
             .parseMode(ParseMode.PLAIN_TEXT.type())
             .removeButtons(true)
-            .previousSendedMessageId(111);
+            .previousSentMessageId(111);
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
-        assertEquals(secondStageName, clientData.currentStage());
-        assertTrue(clientData.currentStageInitiated());
-        assertEquals(1111, clientData.previousSendedMessageId());
+        assertEquals(secondStageName, clientData.stageName());
+        assertTrue(clientData.stageInitiated());
+        assertEquals(1111, clientData.getPreviousSentMessageId().orElseThrow());
         assertEquals(clientData.stageVars(), Map.of("register", true));
         assertEquals(List.of(firstStage.name()), clientData.previousStages());
         assertEquals(Map.of("key2", "val2", "key1", "val1"), clientData.additionalVars());
@@ -222,10 +222,10 @@ class EventHandlerTest {
     @SneakyThrows
     void run_4() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
-            .currentStageInitiated(true)
             .previousStages(List.of())
-            .previousSendedMessageId(111);
+            .sentMessageIds(List.of(111))
+            .bindNewStage(firstStageName)
+            .setStageInitiated();
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
@@ -238,16 +238,16 @@ class EventHandlerTest {
         var expectedOutput = new OutputData()
             .chatId(11)
             .removeButtons(true)
-            .previousSendedMessageId(111);
+            .previousSentMessageId(111);
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
         assertEquals(expectedOutput, outputCaptor.getValue());
         verify(gateway, times(1 + 1)).produce(any(OutputData.class));
-        assertEquals(111, clientData.previousSendedMessageId());
-        assertEquals(clientData.currentStage(), failStageName);
-        assertTrue(clientData.currentStageInitiated());
+        assertEquals(111, clientData.getPreviousSentMessageId().orElseThrow());
+        assertEquals(clientData.stageName(), failStageName);
+        assertTrue(clientData.stageInitiated());
     }
 
     @Test
@@ -255,8 +255,8 @@ class EventHandlerTest {
     @SneakyThrows
     void run_5() {
         var clientData = new ClientData()
-            .currentStage(firstStageName)
             .previousStages(List.of())
+            .bindNewStage(firstStageName)
             .additionalVars(Map.of());
         var updateData = new UpdateData()
             .client(clientData);
@@ -268,8 +268,8 @@ class EventHandlerTest {
         new EventHandler(config, gateway, updateData).run();
 
         verify(gateway, times(2 + 2)).produce(any(OutputData.class));
-        assertEquals(secondStageName, clientData.currentStage());
-        assertTrue(clientData.currentStageInitiated());
-        assertFalse(clientData.currentStageCompleted());
+        assertEquals(secondStageName, clientData.stageName());
+        assertTrue(clientData.stageInitiated());
+        assertFalse(clientData.stageCompleted());
     }
 }

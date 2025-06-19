@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 @Entity
-@Table(name = "clients")
+@Table(name = "xtbot_clients")
 @Data
 @Accessors(fluent = true, chain = true)
 public class ClientEntity {
@@ -20,24 +22,33 @@ public class ClientEntity {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "current_stage")
-    private String currentStage;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "xtbot_client_message_ids",
+            joinColumns = @JoinColumn(name = "client_id", referencedColumnName = "id")
+    )
+    @OrderColumn(name = "message_id_position")
+    @Column(name = "message_id", nullable = false)
+    private List<Integer> sentMessageIds;
 
-    @Column(name = "previous_sended_message_id")
-    private Integer previousSendedMessageId;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "xtbot_client_stages",
+        joinColumns = @JoinColumn(name = "client_id", referencedColumnName = "id")
+    )
+    @OrderColumn(name = "stage_position")
+    @Column(name = "stage", nullable = false)
+    private List<String> stages;
 
-    @Column(name = "previous_stages", columnDefinition = "TEXT")
-    private String previousStages;
+    @Column(name = "stage_initiated", nullable = false)
+    private Boolean stageInitiated;
 
-    @Column(name = "stage_initiated")
-    private Boolean currentStageInitiated;
+    @Column(name = "stage_completed", nullable = false)
+    private Boolean stageCompleted;
 
-    @Column(name = "stage_completed")
-    private Boolean currentStageCompleted;
-
-    @Column(name = "additional_vars", columnDefinition = "TEXT")
+    @Column(name = "additional_vars", columnDefinition = "TEXT", nullable = false)
     private String additionalVars;
 
-    @Column(name = "stage_vars", columnDefinition = "TEXT")
+    @Column(name = "stage_vars", columnDefinition = "TEXT", nullable = false)
     private String stageVars;
 }

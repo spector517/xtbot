@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import lombok.SneakyThrows;
 
+import java.util.List;
+
 class InternalClientRepositoryTest {
 
     private final long externalId = 11L;
@@ -53,11 +55,11 @@ class InternalClientRepositoryTest {
     void testSave_0() {
         var repository = new InternalClientRepository();
         var id = 1L;
-        clientEntity.currentStage("test1");
+        clientEntity.stages(List.of("test1"));
         clientEntity.id(id);
         clientEntity.externalId(externalId);
         repository.save(clientEntity);
-        updatedClientEntity.currentStage("test2");
+        updatedClientEntity.stages(List.of("test2"));
         updatedClientEntity.id(id);
         updatedClientEntity.externalId(externalId);
 

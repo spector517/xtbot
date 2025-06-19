@@ -2,6 +2,7 @@ package com.github.spector517.xtbot.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,8 @@ class ClientDataToEntityMapperTest {
     private String userName;
     private long externalId;
     private String currentStage;
-    private int previousSendedMessageId;
     private List<String> previousStages;
+    private List<Integer> previousSentMessageIds;
     private Map<String, Object> additionalVars;
     private Map<String, Object> stageVars;
 
@@ -35,8 +36,8 @@ class ClientDataToEntityMapperTest {
         externalId = 11;
         currentStage = "TestStage";
         previousStages = List.of("Stage1", "Stage2");
+        previousSentMessageIds = List.of(1, 2, 3);
         additionalVars = Map.of("key1", "value1");
-        previousSendedMessageId = 123; 
         stageVars = Map.of("key2", "value2");
         clientDataToEntityMapper = new ClientDataToEntityMapper(objectMapper);
     }
@@ -48,21 +49,21 @@ class ClientDataToEntityMapperTest {
         var clientData = new ClientData()
                 .externalId(externalId)
                 .name(userName)
-                .currentStage(currentStage)
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
-                .previousSendedMessageId(previousSendedMessageId)
+                .sentMessageIds(previousSentMessageIds)
                 .previousStages(previousStages)
+                .bindNewStage(currentStage)
+                .setStageInitiated()
                 .additionalVars(additionalVars)
                 .stageVars(stageVars);
+        var expectedStages = new ArrayList<>(previousStages);
+        expectedStages.add(currentStage);
         var expectedEntity = new ClientEntity()
                 .externalId(externalId)
                 .name(userName)
-                .currentStage(currentStage)
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
-                .previousSendedMessageId(previousSendedMessageId)
-                .previousStages(objectMapper.writeValueAsString(previousStages))
+                .stageInitiated(true)
+                .stageCompleted(false)
+                .sentMessageIds(previousSentMessageIds)
+                .stages(expectedStages)
                 .additionalVars(objectMapper.writeValueAsString(additionalVars))
                 .stageVars(objectMapper.writeValueAsString(stageVars));
 
@@ -78,19 +79,20 @@ class ClientDataToEntityMapperTest {
         var clientData = new ClientData()
                 .externalId(externalId)
                 .name(userName)
-                .currentStage(currentStage)
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
+                .sentMessageIds(previousSentMessageIds)
                 .previousStages(List.of())
+                .bindNewStage(currentStage)
+                .setStageInitiated()
                 .additionalVars(Map.of())
                 .stageVars(stageVars);
         var expectedEntity = new ClientEntity()
                 .externalId(externalId)
                 .name(userName)
-                .currentStage(currentStage)
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
-                .previousStages("[]")
+                .stages(List.of(currentStage))
+                .stageInitiated(true)
+                .stageCompleted(false)
+                .sentMessageIds(previousSentMessageIds)
+                .stages(List.of(currentStage))
                 .additionalVars("{}")
                 .stageVars(objectMapper.writeValueAsString(stageVars));
 

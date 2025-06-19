@@ -3,10 +3,10 @@ package com.github.spector517.xtbot.core.mapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
-
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -19,20 +19,17 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
 
     @Override
     public ClientEntity map(ClientData clientData, Object... ignored) {
+        var stages = new ArrayList<>(clientData.previousStages());
+        if (clientData.stageName() != null) {
+            stages.add(clientData.stageName());
+        }
         return new ClientEntity()
-                .externalId(clientData.externalId() == 0
-                        ? null
-                        : clientData.externalId()
-                )
+                .externalId(clientData.externalId())
                 .name(clientData.name())
-                .currentStage(clientData.currentStage())
-                .currentStageInitiated(clientData.currentStageInitiated())
-                .currentStageCompleted(clientData.currentStageCompleted())
-                .previousSendedMessageId(clientData.previousSendedMessageId() == 0
-                        ? null
-                        : clientData.previousSendedMessageId()
-                )
-                .previousStages(mapToJson(clientData.previousStages()))
+                .sentMessageIds(clientData.sentMessageIds())
+                .stages(stages)
+                .stageInitiated(clientData.stageInitiated())
+                .stageCompleted(clientData.stageCompleted())
                 .additionalVars(mapToJson(clientData.additionalVars()))
                 .stageVars(mapToJson(clientData.stageVars()));
     }

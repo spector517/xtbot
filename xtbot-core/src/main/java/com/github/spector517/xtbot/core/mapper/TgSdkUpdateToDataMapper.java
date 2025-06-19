@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -87,10 +86,8 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
         return new ClientData()
                 .externalId(clientId)
                 .name(userName)
-                .currentStage(initialStageName)
-                .previousStages(List.of())
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
+                .bindNewStage(initialStageName)
+                .setStageInitiated()
                 .additionalVars(Map.of())
                 .stageVars(Map.of());
     }

@@ -47,18 +47,17 @@ class TgSdkUpdateToDataMapperTest {
     @SneakyThrows
     void setUp() {
         long id = 1;
-        var currentStage = "Stage";
-        var previousStages = List.of("stage0");
+        var previousStage = "Stage0";
+        var currentStage = "Stage1";
         var additionalVars = Map.of("var1", (Object) "value1");
         var stageVars = Map.of("var2", (Object) "value2");
         var clientEntity = new ClientEntity()
                 .id(id)
                 .externalId(externalId)
                 .name(userName)
-                .currentStage(currentStage)
-                .previousStages(objectMapper.writeValueAsString(previousStages))
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
+                .stages(List.of(previousStage, currentStage))
+                .stageInitiated(true)
+                .stageCompleted(false)
                 .additionalVars(objectMapper.writeValueAsString(additionalVars))
                 .stageVars(objectMapper.writeValueAsString(stageVars));
         when(clientRepository.findByExternalId(externalId)).thenReturn(clientEntity);
@@ -66,10 +65,9 @@ class TgSdkUpdateToDataMapperTest {
                 .client(new ClientData()
                         .externalId(externalId)
                         .name(userName)
-                        .currentStage(currentStage)
-                        .currentStageInitiated(true)
-                        .currentStageCompleted(false)
-                        .previousStages(previousStages)
+                        .previousStages(List.of(previousStage))
+                        .bindNewStage(currentStage)
+                        .setStageInitiated()
                         .additionalVars(additionalVars)
                         .stageVars(stageVars))
                 .chatId(chatId);
@@ -136,9 +134,8 @@ class TgSdkUpdateToDataMapperTest {
                         .externalId(externalId)
                         .name(userName)
                         .previousStages(List.of())
-                        .currentStage(initialStageName)
-                        .currentStageInitiated(true)
-                        .currentStageCompleted(false)
+                        .bindNewStage(initialStageName)
+                        .setStageInitiated()
                         .additionalVars(Map.of())
                         .stageVars(Map.of())
                 )

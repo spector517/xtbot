@@ -27,25 +27,22 @@ class UpdateDataToContextMapperTest {
 
     @BeforeEach
     void setUp() {
-        var id = 1;
         var externalId = 11L;
         var name = "cl1";
         var currentStage = "stage3";
-        var previousSendedMessageId = 123;
+        var previousSentMessageId = 123;
         var previousStages = List.of("stage1", "stage2");
         var stageVars = Map.of("key1", "value1", "key2", (Object) "value2");
         var additionalVars = Map.of("key3", "value3", "key4", (Object) "value4");
         var messageId = 1111;
         var messageText = "test";
         var clientData = new ClientData()
-                .id(id)
                 .externalId(externalId)
                 .name(name)
-                .currentStage(currentStage)
-                .currentStageInitiated(true)
-                .currentStageCompleted(false)
-                .previousSendedMessageId(previousSendedMessageId)
+                .sentMessageIds(List.of(previousSentMessageId))
                 .previousStages(previousStages)
+                .bindNewStage(currentStage)
+                .setStageInitiated()
                 .stageVars(stageVars)
                 .additionalVars(additionalVars);
         var messageData = new MessageData()
@@ -67,8 +64,8 @@ class UpdateDataToContextMapperTest {
                         "id", externalId,
                         "name", name,
                         "stage", currentStage,
-                        "previous_sended_message_id", previousSendedMessageId,
-                        "previous_stages", previousStages,
+                        "sent_message_ids", List.of(123),
+                        "previous_stages", List.of("stage1", "stage2"),
                         "vars", additionalVars
                 ),
                 "vars", stageVars

@@ -17,8 +17,8 @@ public class ClientContext {
     private final long externalId;
     private final String name;
     private final String stage;
-    @JsonProperty("previous_sended_message_id")
-    private final int previousSendedMessageId;
+    @JsonProperty("sent_message_ids")
+    private final List<Integer> sentMessageIds;
     @JsonProperty("previous_stages")
     private final List<String> previousStages;
     private final Map<String, Object> vars;
@@ -26,8 +26,8 @@ public class ClientContext {
     public ClientContext(ClientData clientData) {
         this.externalId = clientData.externalId();
         this.name = clientData.name();
-        this.stage = clientData.currentStage();
-        this.previousSendedMessageId = clientData.previousSendedMessageId();
+        this.stage = clientData.stageName();
+        this.sentMessageIds = clientData.sentMessageIds();
         this.previousStages = clientData.previousStages();
         this.vars = clientData.additionalVars();
     }

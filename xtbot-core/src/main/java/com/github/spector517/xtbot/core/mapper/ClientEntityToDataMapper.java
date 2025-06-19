@@ -4,11 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
-
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -20,17 +18,21 @@ public class ClientEntityToDataMapper implements Mapper<ClientData, ClientEntity
     public ClientData map(ClientEntity clientEntity, Object... ignored) throws MappingException {
         var clientData = new ClientData()
                 .externalId(clientEntity.externalId())
-                .name(clientEntity.name())
-                .currentStage(clientEntity.currentStage())
-                .currentStageInitiated(clientEntity.currentStageInitiated())
-                .currentStageCompleted(clientEntity.currentStageCompleted())
-                .previousSendedMessageId(clientEntity.previousSendedMessageId() == null
-                        ? 0
-                        : clientEntity.previousSendedMessageId()
-                );
+                .name(clientEntity.name());
+        clientData.sentMessageIds(clientEntity.sentMessageIds());
+        if (clientEntity.stages().size() > 1) {
+            clientData.previousStages(clientEntity.stages().subList(0, clientEntity.stages().size() - 1));
+        }
 
-        var previousStages = mapFromJson(clientEntity.previousStages(), new TypeReference<List<String>>(){});
-        clientData.previousStages(previousStages != null ? previousStages : List.of());
+        if (!clientEntity.stages().isEmpty()) {
+            clientData.bindNewStage(clientEntity.stages().getLast());
+        }
+        if (clientEntity.stageInitiated()) {
+            clientData.setStageInitiated();
+        }
+        if (clientEntity.stageCompleted()) {
+            clientData.setStageCompleted();
+        }
 
         var additionalVars = mapFromJson(
             clientEntity.additionalVars(),

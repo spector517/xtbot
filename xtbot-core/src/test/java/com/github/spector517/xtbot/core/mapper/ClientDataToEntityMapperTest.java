@@ -1,20 +1,18 @@
 package com.github.spector517.xtbot.core.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
+import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
-import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
-
-import lombok.SneakyThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ClientDataToEntityMapperTest {
 
@@ -95,6 +93,30 @@ class ClientDataToEntityMapperTest {
                 .stages(List.of(currentStage))
                 .additionalVars("{}")
                 .stageVars(objectMapper.writeValueAsString(stageVars));
+
+        var actualEntity = clientDataToEntityMapper.map(clientData);
+
+        assertEquals(expectedEntity, actualEntity);
+    }
+
+    @Test
+    @DisplayName("Limits collection of stages and sentMessageIds")
+    void map_2() {
+        var stages = List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12");
+        var sentMessageIds = List.of(1, 2, 3, 4, 5, 6);
+        var clientData = new ClientData()
+                .stageVars(Map.of())
+                .additionalVars(Map.of());
+        stages.forEach(clientData::bindNewStage);
+        sentMessageIds.forEach(clientData::registerSentMessageId);
+        var expectedEntity = new ClientEntity()
+                .externalId(0L)
+                .stageInitiated(false)
+                .stageCompleted(false)
+                .stages(stages.subList(2, stages.size()))
+                .sentMessageIds(sentMessageIds)
+                .additionalVars("{}")
+                .stageVars("{}");
 
         var actualEntity = clientDataToEntityMapper.map(clientData);
 

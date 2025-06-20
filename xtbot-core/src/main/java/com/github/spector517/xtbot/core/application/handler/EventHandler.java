@@ -4,6 +4,7 @@ import com.github.spector517.xtbot.core.application.config.Config;
 import com.github.spector517.xtbot.core.application.config.Stage;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
+import com.github.spector517.xtbot.core.application.data.outbound.OutputType;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import com.github.spector517.xtbot.core.mapper.MappingException;
@@ -12,7 +13,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -57,54 +60,57 @@ public class EventHandler implements Runnable {
 
     private void initiateStage() throws GatewayException, MappingException {
         log.debug("Initiating stage...");
-        sendTyping();
+        gateway.produce(new OutputData(updateData.chatId(), OutputType.TYPING));
         updateContext();
-        var output = new OutputData().chatId(updateData.chatId());
 
-        stage.message().ifPresent(message -> {
-            message.id().ifPresent(id -> output.messageId(Integer.parseInt(id.value(context))));
-            message.deleteId().ifPresent(deleteId -> 
-                output.deleteMessageId(Integer.parseInt(deleteId.value(context)))
-            );
-            message.text().ifPresent(text -> output.text(text.value(context)));
-            output.parseMode(message.parseMode().type());
-
-            var buttons = message.buttons().stream().map(row -> 
-                row.stream().map(button -> 
-                    new OutputData.Button()
-                        .display(button.display().value(context))
-                        .data(button.data().value(context))
-                ).toList()
-            ).toList();
-            output.buttons(buttons);
-        });
-        
-        updateData.client().getPreviousStage().ifPresent(stageName -> {
-            var previousStage = config.getStage(stageName);
-            output.removeButtons(
-                previousStage.message().isPresent() 
-                    && !previousStage.message().get().buttons().isEmpty()
-                    && previousStage.removeButtons()
-            );
-        });
-        updateData.client().getPreviousSentMessageId().ifPresent(output::previousSentMessageId);
-
-        var messageId = gateway.produce(output);
-        
-        if (messageId != 0) {
-            updateData.client().registerSentMessageId(messageId);
+        var previousStageName = updateData.client().getPreviousStage();
+        if (previousStageName.isPresent()) {
+            var previousStage = config.getStage(previousStageName.get());
+            if (
+                    previousStage.message().isPresent()
+                            && !previousStage.message().get().buttons().isEmpty()
+                            && previousStage.removeButtons()
+                            && updateData.client().getPreviousSentMessageId().isPresent()
+            ) {
+                var output = new OutputData(updateData.chatId(), OutputType.EDIT_MESSAGE);
+                output.messageId(updateData.client().getPreviousSentMessageId().get());
+                output.buttons(List.of());
+                gateway.produce(output);
+            }
         }
+
+        Optional<Integer> sentMessageId = Optional.empty();
+        var message = stage.message();
+        if (message.isPresent()) {
+            var text = message.get().text();
+            if (text.isPresent()) {
+                var output = message.get().id().isPresent()
+                        ? new OutputData(updateData.chatId(), OutputType.EDIT_MESSAGE)
+                            .messageId(Integer.parseInt(message.get().id().get().value(context)))
+                        : new OutputData(updateData.chatId(), OutputType.SEND_MESSAGE);
+                output.text(text.get().value(context));
+                output.parseMode(message.get().parseMode().type());
+                var buttons = message.get().buttons().stream().map(row ->
+                        row.stream().map(button ->
+                                new OutputData.Button(button.display().value(context), button.data().value(context))
+                        ).toList()
+                ).toList();
+                output.buttons(buttons);
+                sentMessageId = gateway.produce(output);
+            }
+
+            var deleteId = message.get().deleteId();
+            if (deleteId.isPresent()) {
+                var output = new OutputData(updateData.chatId(), OutputType.DELETE_MESSAGE);
+                output.deleteMessageId(Integer.parseInt(deleteId.get().value(context)));
+                gateway.produce(output);
+            }
+        }
+
+        sentMessageId.ifPresent(id -> updateData.client().registerSentMessageId(id));
         updateData.client().setStageInitiated();
         updateContext();
         log.debug("Stage initiated.");
-    }
-
-    private void sendTyping() throws GatewayException {
-        gateway.produce(
-            new OutputData()
-                .chatId(updateData.chatId())
-                .sendTyping(true)
-        );
     }
 
     private void completeStage() throws MappingException {

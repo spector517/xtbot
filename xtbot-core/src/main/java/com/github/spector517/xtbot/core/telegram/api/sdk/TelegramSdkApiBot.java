@@ -161,28 +161,24 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
     }
 
     @Override
-    public int produce(OutputData outputData) throws GatewayException {
-        if (outputData.sendTyping()) {
-            sendTyping(outputData);
-        }
-
-        if (outputData.removeButtons()) {
-            removeButtons(outputData);
-        }
-
-        if (outputData.deleteMessageId() > 0) {
-            deleteMessage(outputData);
-        }
-
-        if (outputData.messageId() > 0) {
-            return editMessage(outputData);
-        }
-
-        if (outputData.text() != null) {
-            return sendMessage(outputData);
-        }
-
-        return 0;
+    public Optional<Integer> produce(OutputData outputData) throws GatewayException {
+        return switch (outputData.type()) {
+            case TYPING -> sendTyping(outputData.chatId());
+            case SEND_MESSAGE -> sendMessage(
+                    outputData.chatId(),
+                    outputData.text(),
+                    outputData.parseMode(),
+                    getInlineKeyboardMarkup(outputData).orElse(null)
+            );
+            case EDIT_MESSAGE -> editMessage(
+                    outputData.chatId(),
+                    outputData.messageId(),
+                    outputData.text(),
+                    outputData.parseMode(),
+                    getInlineKeyboardMarkup(outputData).orElse(null)
+            );
+            case DELETE_MESSAGE -> deleteMessage(outputData.chatId(), outputData.deleteMessageId());
+        };
     }
 
     private Runnable wrapHandler(Runnable handler, UpdateData updateData) {
@@ -205,100 +201,87 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
         };
     }
 
-    private void sendTyping(OutputData outputData) throws GatewayException {
+    private Optional<Integer> sendTyping(long chatId) throws GatewayException {
         var chatAction = SendChatAction.builder()
                 .action(ActionType.TYPING.toString())
-                .chatId(outputData.chatId())
+                .chatId(chatId)
                 .build();
         try {
             log.debug("Sending typing action");
             telegramClient.execute(chatAction);
+            return Optional.empty();
         } catch (TelegramApiException ex) {
             log.error("Sending typing action error");
             throw new GatewayException(ex);
         }
     }
 
-    private void removeButtons(OutputData outputData) throws GatewayException {
-        if (outputData.removeButtons()) {
-            try {
-                log.debug("Removing buttons");
-                telegramClient.execute(EditMessageReplyMarkup.builder()
-                        .chatId(outputData.chatId())
-                        .messageId(outputData.previousSentMessageId())
-                        .build()
-                );
-            } catch (TelegramApiException ex) {
-                log.error("Removing buttons error");
-                throw new GatewayException(ex);
-            }
-        }
-    }
-
-    private int sendMessage(OutputData outputData) throws GatewayException {
+    private Optional<Integer> sendMessage(
+            long chatId, String text, String parseMode, InlineKeyboardMarkup keyboardMarkup
+    ) throws GatewayException {
         var sendMessage = SendMessage.builder()
-                .text(outputData.text())
-                .parseMode(outputData.parseMode())
-                .chatId(outputData.chatId());
-        getInlineKeyboardMarkup(outputData).ifPresent(sendMessage::replyMarkup);
+                .chatId(chatId)
+                .text(text)
+                .parseMode(parseMode)
+                .replyMarkup(keyboardMarkup);
         try {
             log.debug("Sending message");
-            return telegramClient.execute(sendMessage.build()).getMessageId();
+            return Optional.of(telegramClient.execute(sendMessage.build()).getMessageId());
         } catch (Exception ex) {
             log.error("Sending message error");
             throw new GatewayException(ex);
         }
     }
 
-    private int editMessage(OutputData outputData) throws GatewayException {
-        if (outputData.text() != null) {
-            return editTextMessage(outputData);
+    private Optional<Integer> editMessage(
+            long chatId, int messageId, String text, String parseMode, InlineKeyboardMarkup replyMarkup
+    ) throws GatewayException {
+        if (text != null) {
+            editText(chatId, messageId, text, parseMode);
         }
-        if (outputData.buttons() != null) {
-            return editButtons(outputData);
-        }
-        return 0;
+        editReplyMarkup(chatId, messageId, replyMarkup);
+        return Optional.empty();
     }
 
-    private int editTextMessage(OutputData outputData) throws GatewayException {
+    private void editText(long chatId, int messageId, String text, String parseMode) throws GatewayException {
         var editMessage = EditMessageText.builder()
-                .text(outputData.text())
-                .parseMode(outputData.parseMode())
-                .chatId(outputData.chatId())
-                .messageId(outputData.messageId());
-        getInlineKeyboardMarkup(outputData).ifPresent(editMessage::replyMarkup);
+                .chatId(chatId)
+                .messageId(messageId)
+                .text(text)
+                .parseMode(parseMode)
+                .build();
         try {
-            log.debug("Editing message");
-            telegramClient.execute(editMessage.build());
-            return outputData.messageId();
+            log.debug("Editing message text");
+            telegramClient.execute(editMessage);
         } catch (Exception ex) {
-            log.error("Editing message error");
+            log.error("Editing message text error");
             throw new GatewayException(ex);
         }
     }
 
-    private int editButtons(OutputData outputData) throws GatewayException {
-        var editButtons = EditMessageReplyMarkup.builder()
-                .chatId(outputData.chatId())
-                .messageId(outputData.messageId());
-        getInlineKeyboardMarkup(outputData).ifPresent(editButtons::replyMarkup);
+    private void editReplyMarkup(long chatId, int messageId, InlineKeyboardMarkup replyMarkup) throws GatewayException {
+        var editReplyMarkup = EditMessageReplyMarkup.builder()
+                .chatId(chatId)
+                .messageId(messageId)
+                .replyMarkup(replyMarkup)
+                .build();
         try {
-            log.debug("Editing buttons");
-            telegramClient.execute(editButtons.build());
-            return outputData.messageId();
+            log.debug("Editing reply markup");
+            telegramClient.execute(editReplyMarkup);
         } catch (Exception ex) {
-            log.error("Editing buttons error");
+            log.error("Editing reply markup error");
             throw new GatewayException(ex);
         }
     }
 
-    private void deleteMessage(OutputData outputData) throws GatewayException {
+    private Optional<Integer> deleteMessage(long chatId, int messageId) throws GatewayException {
         var deleteMessage = DeleteMessage.builder()
-                .chatId(outputData.chatId())
-                .messageId(outputData.deleteMessageId());
+                .chatId(chatId)
+                .messageId(messageId);
         try {
             log.debug("Deleting message");
             telegramClient.execute(deleteMessage.build());
+            return Optional.empty();
         } catch (Exception ex) {
             log.error("Deleting message error");
             throw new GatewayException(ex);

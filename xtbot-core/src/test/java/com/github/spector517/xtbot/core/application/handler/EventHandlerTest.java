@@ -4,6 +4,7 @@ import com.github.spector517.xtbot.core.application.config.*;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
+import com.github.spector517.xtbot.core.application.data.outbound.OutputType;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import lombok.SneakyThrows;
@@ -107,23 +108,28 @@ class EventHandlerTest {
             .chatId(11)
             .client(clientData);
         var outputCaptor = ArgumentCaptor.forClass(OutputData.class);
-        when(gateway.produce(outputCaptor.capture())).thenReturn(1111);
-        var expectedOutput = new OutputData()
-            .chatId(11)
-            .text(firstStageMessageText)
-            .parseMode(ParseMode.MARKDOWN.type())
-            .buttons(List.of(List.of(
-                new OutputData.Button()
-                    .display(firstStageButtonDisplayName)
-                    .data(firstStageButtonData)
-            )))
-            .previousSentMessageId(111);
+        when(gateway.produce(outputCaptor.capture())).then(invocationOnMock -> {
+            var output = (OutputData) invocationOnMock.getArgument(0);
+            return output.type() == OutputType.SEND_MESSAGE ? Optional.of(1111) : Optional.empty();
+        });
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(2)).map(any(UpdateData.class));
-        assertEquals(expectedOutput, outputCaptor.getValue());
-        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
+        var capturedValues = outputCaptor.getAllValues();
+        assertEquals(2, capturedValues.size());
+        assertEquals(
+                new OutputData(11L, OutputType.TYPING), capturedValues.getFirst()
+        );
+        assertEquals(
+                new OutputData(11L, OutputType.SEND_MESSAGE)
+                        .text(firstStageMessageText)
+                        .parseMode(ParseMode.MARKDOWN.type())
+                        .buttons(List.of(List.of(
+                                new OutputData.Button(firstStageButtonDisplayName, firstStageButtonData)
+                        ))),
+                capturedValues.get(1)
+        );
         assertEquals(1111, clientData.getPreviousSentMessageId().orElseThrow());
         assertTrue(clientData.stageInitiated());
     }
@@ -196,19 +202,32 @@ class EventHandlerTest {
         when(firstStage.acceptors()).thenReturn(List.of(acceptor));
         when(firstStage.actions()).thenReturn(List.of(action));
         var outputCaptor = ArgumentCaptor.forClass(OutputData.class);
-        when(gateway.produce(outputCaptor.capture())).thenReturn(1111);
-        var expectedOutput = new OutputData()
-            .chatId(11)
-            .text(secondStageMessageText)
-            .parseMode(ParseMode.PLAIN_TEXT.type())
-            .removeButtons(true)
-            .previousSentMessageId(111);
+        when(gateway.produce(outputCaptor.capture())).then(invocationOnMock -> {
+            var output = (OutputData) invocationOnMock.getArgument(0);
+            return output.type() == OutputType.SEND_MESSAGE ? Optional.of(1111) : Optional.empty();
+        });
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
-        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
-        assertEquals(expectedOutput, outputCaptor.getValue());
+        var capturedValues = outputCaptor.getAllValues();
+        assertEquals(3, capturedValues.size());
+        assertEquals(
+                new OutputData(11L, OutputType.TYPING), capturedValues.getFirst()
+        );
+        assertEquals(
+                new OutputData(11L, OutputType.EDIT_MESSAGE)
+                        .messageId(111)
+                        .buttons(List.of()),
+                capturedValues.get(1)
+        );
+        assertEquals(
+                new OutputData(11L, OutputType.SEND_MESSAGE)
+                        .text(secondStageMessageText)
+                        .parseMode(ParseMode.PLAIN_TEXT.type())
+                        .buttons(List.of()),
+                capturedValues.get(2)
+        );
         assertEquals(secondStageName, clientData.stageName());
         assertTrue(clientData.stageInitiated());
         assertEquals(1111, clientData.getPreviousSentMessageId().orElseThrow());
@@ -218,7 +237,7 @@ class EventHandlerTest {
     }
 
     @Test
-    @DisplayName("Initiated, error while initiating")
+    @DisplayName("Initiated, error while completing")
     @SneakyThrows
     void run_4() {
         var clientData = new ClientData()
@@ -234,17 +253,25 @@ class EventHandlerTest {
             .thenThrow(new AcceptorExecutionException(new Exception()));
         when(firstStage.acceptors()).thenReturn(List.of(acceptor));
         var outputCaptor = ArgumentCaptor.forClass(OutputData.class);
-        when(gateway.produce(outputCaptor.capture())).thenReturn(0);
-        var expectedOutput = new OutputData()
-            .chatId(11)
-            .removeButtons(true)
-            .previousSentMessageId(111);
+        when(gateway.produce(outputCaptor.capture())).then(invocationOnMock -> {
+            var output = (OutputData) invocationOnMock.getArgument(0);
+            return output.type() == OutputType.SEND_MESSAGE ? Optional.of(1111) : Optional.empty();
+        });
 
         new EventHandler(config, gateway, updateData).run();
 
         verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
-        assertEquals(expectedOutput, outputCaptor.getValue());
-        verify(gateway, times(1 + 1)).produce(any(OutputData.class));
+        var capturedValues = outputCaptor.getAllValues();
+        assertEquals(2, capturedValues.size());
+        assertEquals(
+                new OutputData(11L, OutputType.TYPING), capturedValues.getFirst()
+        );
+        assertEquals(
+                new OutputData(11L, OutputType.EDIT_MESSAGE)
+                        .messageId(111)
+                        .buttons(List.of()),
+                capturedValues.get(1)
+        );
         assertEquals(111, clientData.getPreviousSentMessageId().orElseThrow());
         assertEquals(clientData.stageName(), failStageName);
         assertTrue(clientData.stageInitiated());

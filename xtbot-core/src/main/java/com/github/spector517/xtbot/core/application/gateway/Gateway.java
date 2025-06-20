@@ -14,6 +14,7 @@ import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.properties.Properties;
 
 import java.util.Map;
+import java.util.Optional;
 
 public interface Gateway {
 
@@ -33,7 +34,7 @@ public interface Gateway {
         return ExecutorChecker.getExecutorChecker(getProperties().version());
     }
 
-    int produce(OutputData outputData) throws GatewayException;
+    Optional<Integer> produce(OutputData outputData) throws GatewayException;
 
     Mapper<Map<String, Object>, UpdateData> getContextMapper();
 

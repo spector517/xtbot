@@ -1,6 +1,8 @@
-package com.github.spector517.xtbot.core.mapper;
+package com.github.spector517.xtbot.telegram.mapper;
 
 import com.github.spector517.xtbot.core.application.data.inbound.*;
+import com.github.spector517.xtbot.core.mapper.Mapper;
+import com.github.spector517.xtbot.core.mapper.MappingException;
 import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
@@ -39,13 +41,14 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
                 .client(clientData)
                 .chatId(chatId)
                 .type(updateType);
-        switch (updateType) {
-            case MESSAGE -> updateData.message(
+        if (updateType == Type.MESSAGE) {
+            updateData.message(
                     new MessageData()
                             .id(update.getMessage().getMessageId())
                             .text(update.getMessage().getText())
             );
-            case CALLBACK -> updateData.callback(
+        } else {
+            updateData.callback(
                     new CallbackData()
                             .data(update.getCallbackQuery().getData())
             );

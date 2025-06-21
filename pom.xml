@@ -13,6 +13,7 @@
         <module>xtbot-api</module>
         <module>xtbot-internal-lib</module>
         <module>xtbot-test</module>
+        <module>xtbot-telegram</module>
     </modules>
 
     <properties>

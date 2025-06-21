@@ -1,8 +1,10 @@
-package com.github.spector517.xtbot.core;
+package com.github.spector517.xtbot.telegram;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
+import com.github.spector517.xtbot.telegram.sdk.TelegramSdkApiBot;
 import com.github.spector517.xtbot.core.application.extension.CommonMethodsLoader;
 import com.github.spector517.xtbot.core.jinja.JinjaRender;
 import com.github.spector517.xtbot.core.loader.ExternalJarClassLoader;
@@ -12,7 +14,6 @@ import com.github.spector517.xtbot.core.properties.*;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.H2ClientRepository;
 import com.github.spector517.xtbot.core.repository.InternalClientRepository;
-import com.github.spector517.xtbot.core.telegram.api.sdk.TelegramSdkApiBot;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
@@ -49,7 +50,7 @@ public class XTelegramBot {
             return new YamlFilePropertiesLoader(yamlPropsLocation, yamlObjectMapper).load();
         } catch (LoadPropertiesException e) {
             log.error("Failed to load properties from {}: {}", yamlPropsLocation, e.getMessage());
-            log.debug("Stack trace", e);
+            logException(e);
             System.exit(-2);
             return null;
         }
@@ -90,7 +91,7 @@ public class XTelegramBot {
             return new TelegramSdkApiBot(parameters);
         } catch (Exception e) {
             log.error("Failed to create bot: {}", e.getMessage());
-            log.debug("Stack trace", e);
+            logException(e);
             System.exit(-3);
             return null;
         }
@@ -106,9 +107,10 @@ public class XTelegramBot {
             log.error("Failed to register bot: {}", e.getMessage());
             log.debug("Stack trace", e);
             System.exit(-4);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("Unknown Telegram SDK error: {}", e.getMessage());
-            log.debug("Stack trace", e);
             System.exit(-5);
         }
     }
@@ -120,5 +122,9 @@ public class XTelegramBot {
         return properties.database().type() == DatabaseType.H2
                 ? new H2ClientRepository(Path.of(properties.database().h2().directory()))
                 : new InternalClientRepository();
+    }
+
+    private static void logException(Exception e) {
+        log.debug("Stack trace", e);
     }
 }

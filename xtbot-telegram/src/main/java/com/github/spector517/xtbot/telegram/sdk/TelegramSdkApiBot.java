@@ -1,4 +1,4 @@
-package com.github.spector517.xtbot.core.telegram.api.sdk;
+package com.github.spector517.xtbot.telegram.sdk;
 
 import com.github.spector517.xtbot.api.dto.Update;
 import com.github.spector517.xtbot.core.application.config.Config;
@@ -13,7 +13,7 @@ import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.mapper.MappingException;
-import com.github.spector517.xtbot.core.mapper.TgSdkUpdateToDataMapper;
+import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
 import com.github.spector517.xtbot.core.properties.Properties;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
@@ -157,7 +157,7 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
     }
 
     public ExecutorLoader getExecutorLoader() {
-        return commonMethodsLoader;
+        return (ExecutorLoader) getAcceptorLoader();
     }
 
     @Override

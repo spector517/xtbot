@@ -34,3 +34,6 @@ build/
 # Target files
 bot-test.jar
 .properties
+
+# iml
+*.iml

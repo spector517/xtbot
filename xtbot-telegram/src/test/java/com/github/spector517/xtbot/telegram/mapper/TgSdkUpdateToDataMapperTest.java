@@ -1,7 +1,10 @@
-package com.github.spector517.xtbot.core.mapper;
+package com.github.spector517.xtbot.telegram.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.*;
+import com.github.spector517.xtbot.core.mapper.ClientEntityToDataMapper;
+import com.github.spector517.xtbot.core.mapper.Mapper;
+import com.github.spector517.xtbot.core.mapper.MappingException;
 import com.github.spector517.xtbot.core.repository.ClientNotFoundException;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
@@ -9,7 +12,6 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -38,7 +40,7 @@ class TgSdkUpdateToDataMapperTest {
     private final Mapper<ClientData, ClientEntity> clientEntityToDataMapper =
         new ClientEntityToDataMapper(objectMapper);
 
-    private final ClientRepository clientRepository = Mockito.mock(ClientRepository.class);
+    private final ClientRepository clientRepository = mock(ClientRepository.class);
 
 
     private UpdateData prefilledUpdateData;

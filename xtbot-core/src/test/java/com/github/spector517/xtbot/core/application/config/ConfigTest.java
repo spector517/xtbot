@@ -32,7 +32,7 @@ import com.github.spector517.xtbot.core.properties.StageProps;
 
 import lombok.SneakyThrows;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 class ConfigTest {
 
     private Gateway gateway;
@@ -69,6 +69,7 @@ class ConfigTest {
         var executorChecker = mock(ExecutorChecker.class);
         when(executorAnnotation.value()).thenReturn("test");
         when(executor.getAnnotation(Executor.class)).thenReturn(executorAnnotation);
+        when(executor.getReturnType()).thenReturn((Class) int.class);
 
         when(acceptorLoader.getAcceptor(acceptorName)).thenReturn(acceptor);
         when(executorLoader.getExecutor(executorName)).thenReturn(executor);

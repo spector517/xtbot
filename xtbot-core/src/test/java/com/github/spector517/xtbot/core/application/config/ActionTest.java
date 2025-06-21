@@ -1,15 +1,19 @@
 package com.github.spector517.xtbot.core.application.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.github.spector517.xtbot.api.annotation.Executor;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
+import com.github.spector517.xtbot.core.application.extension.executor.ExecutorNotFoundException;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
+import com.github.spector517.xtbot.core.application.render.Render;
+import com.github.spector517.xtbot.core.mapper.Mapper;
+import com.github.spector517.xtbot.core.properties.ActionProps;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,23 +21,9 @@ import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Map;
 
-import com.github.spector517.xtbot.core.application.gateway.Gateway;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import com.github.spector517.xtbot.api.annotation.Executor;
-import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
-import com.github.spector517.xtbot.core.application.extension.executor.ExecutorNotFoundException;
-import com.github.spector517.xtbot.core.mapper.Mapper;
-import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.properties.ActionProps;
-
-import lombok.SneakyThrows;
-import org.mockito.ArgumentCaptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 class ActionTest {
@@ -45,7 +35,7 @@ class ActionTest {
     private ExecutorChecker executorChecker;
     private String methodName;
     private Render render;
-    private UpdateData updateData;
+    private Map<String, Object> context;
     private Method method;
     private Map<String, Object> args;
     private String resultVarName;
@@ -75,14 +65,12 @@ class ActionTest {
 
         executorChecker = mock(ExecutorChecker.class);
         render = mock(Render.class);
-        updateData = mock(UpdateData.class);
+        context = Map.of();
 
-        Mapper<Map<String, Object>, UpdateData> contextMapper = mock(Mapper.class);
         Mapper<Object, Object> actionResultMapper = mock(Mapper.class);
 
         gateway = mock(Gateway.class);
         when(gateway.getRender()).thenReturn(render);
-        when(gateway.getContextMapper()).thenReturn(contextMapper);
         when(gateway.getActionResultMapper()).thenReturn(actionResultMapper);
     }
 
@@ -90,6 +78,7 @@ class ActionTest {
     @DisplayName("Constructor: Success create Action")
     @SneakyThrows
     void constructor_1() {
+        when(method.getReturnType()).thenReturn((Class) String.class);
         new Action(actionProps, gateway, executorChecker, executorLoader);
 
         verify(executorLoader).getExecutor(methodName);
@@ -137,7 +126,7 @@ class ActionTest {
         when(method.invoke(null, 1, "value2")).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
-        var actualResult = action.execute(updateData);
+        var actualResult = action.execute(context);
 
         assertEquals(result, actualResult);
         verify(gateway.getActionResultMapper(), never()).map(any(), any(Class.class));
@@ -153,7 +142,7 @@ class ActionTest {
         when(method.invoke(null, 1, "value2")).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
-        var actualResult = action.execute(updateData);
+        var actualResult = action.execute(context);
 
         var objectCaptor = ArgumentCaptor.forClass(Object.class);
         verify(gateway.getActionResultMapper()).map(objectCaptor.capture(), eq(Map.class));
@@ -171,7 +160,7 @@ class ActionTest {
         when(method.invoke(null, 1, "value2")).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
-        var actualResult = action.execute(updateData);
+        var actualResult = action.execute(context);
 
         var objectCaptor = ArgumentCaptor.forClass(Object.class);
         verify(gateway.getActionResultMapper()).map(objectCaptor.capture(), eq(List.class));
@@ -188,7 +177,7 @@ class ActionTest {
             .thenThrow(new InvocationTargetException(new Exception()));
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
-        var ex = assertThrows(ActionExecutionException.class, () -> action.execute(updateData));
+        var ex = assertThrows(ActionExecutionException.class, () -> action.execute(context));
 
         assertEquals(InvocationTargetException.class, ex.getCause().getClass());
     }
@@ -236,7 +225,7 @@ class ActionTest {
         var action = new Action(
                 new ActionProps(methodName, arguments, resultVarName), gateway, executorChecker, executorLoader
         );
-        var actualResult = action.execute(updateData);
+        var actualResult = action.execute(context);
 
         assertEquals(result, actualResult);
         verify(method).invoke(
@@ -259,7 +248,7 @@ class ActionTest {
         var action = new Action(
                 new ActionProps(methodName, null, resultVarName),gateway, executorChecker, executorLoader
         );
-        var actualResult = action.execute(updateData);
+        var actualResult = action.execute(context);
 
         assertEquals(expectedResult, actualResult);
         verify(method).invoke(null);

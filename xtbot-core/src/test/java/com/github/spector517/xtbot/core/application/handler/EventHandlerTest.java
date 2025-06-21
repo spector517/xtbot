@@ -115,7 +115,7 @@ class EventHandlerTest {
 
         new EventHandler(config, gateway, updateData).run();
 
-        verify(contextMapper, times(2)).map(any(UpdateData.class));
+        verify(contextMapper, times(1)).map(any(UpdateData.class));
         var capturedValues = outputCaptor.getAllValues();
         assertEquals(2, capturedValues.size());
         assertEquals(
@@ -155,7 +155,7 @@ class EventHandlerTest {
 
         new EventHandler(config, gateway, updateData).run();
 
-        verify(contextMapper, times(3)).map(any(UpdateData.class));
+        verify(contextMapper, times(2)).map(any(UpdateData.class));
         verify(gateway, never()).produce(any(OutputData.class));
         assertEquals(Map.of("key1", "val1"), clientData.additionalVars());
         assertTrue(clientData.stageCompleted());
@@ -197,7 +197,7 @@ class EventHandlerTest {
         var acceptor = mock(Acceptor.class);
         when(acceptor.accept(any(UpdateData.class))).thenReturn(true);
         var action = mock(Action.class);
-        when(action.execute(any(UpdateData.class))).thenReturn(true);
+        when(action.execute(any(Map.class))).thenReturn(true);
         when(action.register()).thenReturn("register");
         when(firstStage.acceptors()).thenReturn(List.of(acceptor));
         when(firstStage.actions()).thenReturn(List.of(action));
@@ -209,7 +209,7 @@ class EventHandlerTest {
 
         new EventHandler(config, gateway, updateData).run();
 
-        verify(contextMapper, times(3 + 2)).map(any(UpdateData.class));
+        verify(contextMapper, times(2 + 1 + 1)).map(any(UpdateData.class));
         var capturedValues = outputCaptor.getAllValues();
         assertEquals(3, capturedValues.size());
         assertEquals(
@@ -260,7 +260,7 @@ class EventHandlerTest {
 
         new EventHandler(config, gateway, updateData).run();
 
-        verify(contextMapper, times(1 + 2)).map(any(UpdateData.class));
+        verify(contextMapper, times(1 + 1)).map(any(UpdateData.class));
         var capturedValues = outputCaptor.getAllValues();
         assertEquals(2, capturedValues.size());
         assertEquals(

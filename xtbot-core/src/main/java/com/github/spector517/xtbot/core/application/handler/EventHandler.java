@@ -109,7 +109,6 @@ public class EventHandler implements Runnable {
 
         sentMessageId.ifPresent(id -> updateData.client().registerSentMessageId(id));
         updateData.client().setStageInitiated();
-        updateContext();
         log.debug("Stage initiated.");
     }
 
@@ -128,29 +127,25 @@ public class EventHandler implements Runnable {
         log.debug("Completing stage...");
 
         updateData.client().stageVars(new HashMap<>());
-        stage.actions().forEach(action -> {
+        for (var action : stage.actions()) {
             log.debug("Run action: {}", action.name());
-            var result = action.execute(updateData);
+            var result = action.execute(context);
             log.debug("Action '{}' result: {}", action.name(), result);
-            var resultVar = action.register().isBlank() ? "_" : action.register();
+            var resultVar = action.register();
             log.debug("Register action result to var '{}'", resultVar);
             updateData.client().updateStageVars(Map.of(resultVar, result));
-        });
-        bindAdditionalVars();
+            updateContext();
+        }
+        var currentStageAdditionalVars = stage.getAdditionalVars(context);
+        updateData.client().updateAdditionalVars(currentStageAdditionalVars);
 
         updateData.client().setStageCompleted();
-        updateContext();
         log.debug("Stage completed.");
     }
 
-    private void bindAdditionalVars() throws MappingException {
-        updateContext();
-        var currentStageAdditionalVars = stage.getAdditionalVars(context);
-        updateData.client().updateAdditionalVars(currentStageAdditionalVars);
-    }
-
-    private boolean bindNextStage() {
+    private boolean bindNextStage() throws MappingException {
         log.debug("Binding next stage");
+        updateContext();
         Stage nextStage;
         try {
             if (stage.next().isEmpty()) {

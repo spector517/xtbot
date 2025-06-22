@@ -1,0 +1,9 @@
+.idea/*
+.properties
+.vscode
+*/target/*
+.gitignore
+LICENSE
+veepeenet-services/*
+README.md
+xtbot.iml

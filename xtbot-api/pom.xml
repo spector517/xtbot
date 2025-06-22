@@ -14,6 +14,14 @@
     <name>xtbot-api</name>
     <description>API module for XTBot project</description>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>github_xtbot</id>
+            <name>GitHub XTBot spector517 Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/spector517/xtbot</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>

@@ -11,6 +11,9 @@
 
     <artifactId>xtbot-core</artifactId>
 
+    <name>xtbot-core</name>
+    <description>Core module for XTBot project</description>
+
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>

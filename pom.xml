@@ -4,6 +4,28 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>spector517</id>
+            <name>Alexander Borunov</name>
+            <email>spector517@icloud.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/spector517/xtbot</url>
+        <connection>scm:git:git@github.com:spector517/xtbot.git</connection>
+        <developerConnection>scm:git:git@github.com:spector517/xtbot.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    <url>https://github.com/spector517/xtbot</url>
+
     <groupId>com.github.spector517</groupId>
     <artifactId>xtbot</artifactId>
     <version>0.3.0-SNAPSHOT</version>
@@ -15,7 +37,6 @@
         <module>xtbot-test</module>
         <module>xtbot-telegram</module>
     </modules>
-
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>

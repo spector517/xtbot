@@ -1,0 +1,8 @@
+version: 1
+cars:
+  !include cars/audi.yml A7 silver '$70 000'
+  !include cars/audi.yml 'Q7' silver "$100 000"
+  !include "cars/bmw.yml" M5 'blue' "$140 000"
+  !include cars/bmw.yml X5 black '$110 000'
+company_id: 123456
+!include 'footer.yml'

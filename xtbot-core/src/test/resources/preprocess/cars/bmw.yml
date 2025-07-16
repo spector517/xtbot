@@ -1,0 +1,6 @@
+- model: BMW
+  display: BMW !$0
+  series: !$0
+  color: !$1
+  price: !$2
+  !include meta/BMW_!$0_!$1.yml

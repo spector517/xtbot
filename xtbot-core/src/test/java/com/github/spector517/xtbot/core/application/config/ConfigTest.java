@@ -27,8 +27,8 @@ import com.github.spector517.xtbot.core.application.extension.executor.ExecutorC
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.properties.Properties;
-import com.github.spector517.xtbot.core.properties.StageProps;
+import com.github.spector517.xtbot.core.properties.data.Properties;
+import com.github.spector517.xtbot.core.properties.data.StageProps;
 
 import lombok.SneakyThrows;
 

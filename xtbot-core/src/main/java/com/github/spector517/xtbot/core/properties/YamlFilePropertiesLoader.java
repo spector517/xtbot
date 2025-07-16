@@ -1,7 +1,11 @@
 package com.github.spector517.xtbot.core.properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.spector517.xtbot.core.properties.data.Properties;
+import com.github.spector517.xtbot.core.properties.exception.LoadPropertiesException;
 import lombok.RequiredArgsConstructor;
+
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -24,8 +28,12 @@ public class YamlFilePropertiesLoader {
         if (!Files.exists(configPath)) {
             throw new LoadPropertiesException("Properties file not found: %s".formatted(configPath));
         }
+
+        var includePreprocessor = new YamlFileIncludePreprocessor();
         try {
-            properties = yamlObjectMapper.readValue(configPath.toFile(), Properties.class);
+            var rawContent = Files.readString(configPath, StandardCharsets.UTF_8);
+            var preprocessedContent = includePreprocessor.preprocess(rawContent, configPath);
+            properties = yamlObjectMapper.readValue(preprocessedContent, Properties.class);
         } catch (Exception e) {
             throw new LoadPropertiesException(e);
         }

@@ -6,8 +6,8 @@ import com.github.spector517.xtbot.core.application.extension.executor.ExecutorC
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.utils.CommonUtils;
-import com.github.spector517.xtbot.core.properties.AcceptorProps;
-import com.github.spector517.xtbot.core.properties.StageProps;
+import com.github.spector517.xtbot.core.properties.data.AcceptorProps;
+import com.github.spector517.xtbot.core.properties.data.StageProps;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 

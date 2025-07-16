@@ -1,0 +1,6 @@
+- model: Audi
+  display: Audi !$0
+  series: !$0
+  color: !$1
+  price: !$2
+  !include meta/Audi_!$0_!$1.yml

@@ -1,4 +1,4 @@
-package com.github.spector517.xtbot.core.properties;
+package com.github.spector517.xtbot.core.properties.data;
 
 import java.util.Map;
 

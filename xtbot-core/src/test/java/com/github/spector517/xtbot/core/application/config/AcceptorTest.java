@@ -26,7 +26,7 @@ import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorL
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorNotFoundException;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.application.render.Render;
-import com.github.spector517.xtbot.core.properties.AcceptorProps;
+import com.github.spector517.xtbot.core.properties.data.AcceptorProps;
 
 import lombok.SneakyThrows;
 

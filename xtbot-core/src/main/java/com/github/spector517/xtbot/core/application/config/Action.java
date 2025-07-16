@@ -4,7 +4,7 @@ import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.core.application.extension.executor.*;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.utils.CommonUtils;
-import com.github.spector517.xtbot.core.properties.ActionProps;
+import com.github.spector517.xtbot.core.properties.data.ActionProps;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 

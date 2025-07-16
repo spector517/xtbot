@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.github.spector517.xtbot.core.properties.data.*;
+import com.github.spector517.xtbot.core.properties.exception.LoadPropertiesException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -145,6 +147,6 @@ class YamlFilePropertiesLoaderTest {
         loader.load();
         loader.load();
         verify(mapper, times(1))
-                .readValue(any(File.class), eq(Properties.class));
+                .readValue(any(String.class), eq(Properties.class));
     }
 }

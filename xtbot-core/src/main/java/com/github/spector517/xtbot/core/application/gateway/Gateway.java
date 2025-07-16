@@ -11,7 +11,7 @@ import com.github.spector517.xtbot.core.application.extension.executor.ExecutorL
 import com.github.spector517.xtbot.core.application.handler.EventHandler;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
-import com.github.spector517.xtbot.core.properties.Properties;
+import com.github.spector517.xtbot.core.properties.data.Properties;
 
 import java.util.Map;
 import java.util.Optional;

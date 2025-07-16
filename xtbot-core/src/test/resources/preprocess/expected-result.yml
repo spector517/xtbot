@@ -1,0 +1,30 @@
+version: 1
+cars:
+  - model: Audi
+    display: Audi A7
+    series: A7
+    color: silver
+    price: $70 000
+    image_id: qwe123
+  - model: Audi
+    display: Audi Q7
+    series: Q7
+    color: silver
+    price: $100 000
+    image_id: qwe456
+  - model: BMW
+    display: BMW M5
+    series: M5
+    color: blue
+    price: $140 000
+    image_id: asd123
+  - model: BMW
+    display: BMW X5
+    series: X5
+    color: black
+    price: $110 000
+    image_id: asd456
+company_id: 123456
+contacts:
+  address: LA
+  phone: 1-800-555-35-35

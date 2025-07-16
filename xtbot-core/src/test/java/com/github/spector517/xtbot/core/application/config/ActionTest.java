@@ -8,7 +8,7 @@ import com.github.spector517.xtbot.core.application.extension.executor.ExecutorN
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
-import com.github.spector517.xtbot.core.properties.ActionProps;
+import com.github.spector517.xtbot.core.properties.data.ActionProps;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package com.github.spector517.xtbot.core.properties;
+package com.github.spector517.xtbot.core.properties.data;
 
 public record ButtonProps(
         String display,

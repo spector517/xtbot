@@ -18,6 +18,7 @@ import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
 import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 @Slf4j
+@Accessors(fluent = true)
 public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer, Gateway {
 
     private final AbstractTelegramClient telegramClient;
@@ -57,6 +59,8 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
     private final Mapper<ClientEntity, ClientData> toEntityMapper;
     private final Render render;
     private final CommonMethodsLoader commonMethodsLoader;
+    @Getter
+    private final String token;
 
     private final Map<Long, Future<?>> inProgressEvents;
     private final Config config;
@@ -76,6 +80,7 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
         private Mapper<ClientData,ClientEntity> fromEntityMapper;
         private Render render;
         private CommonMethodsLoader commonMethodsLoader;
+        private String token;
     }
 
     @SneakyThrows
@@ -91,6 +96,7 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
         this.toEntityMapper = params.toEntityMapper;
         this.render = params.render;
         this.commonMethodsLoader = params.commonMethodsLoader;
+        this.token = params.token;
 
         this.inProgressEvents = new ConcurrentHashMap<>();
         this.config = new Config(this);

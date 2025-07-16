@@ -80,7 +80,6 @@ class YamlFilePropertiesLoaderTest {
     void load_3() {
         var expectedConfig = new Properties(
                 1,
-                "token",
                 null,
                 null,
                 List.of(

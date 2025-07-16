@@ -3,21 +3,21 @@ package com.github.spector517.xtbot.telegram;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.github.spector517.xtbot.core.properties.data.DatabaseType;
-import com.github.spector517.xtbot.core.properties.exception.LoadPropertiesException;
-import com.github.spector517.xtbot.core.properties.data.Properties;
-import com.github.spector517.xtbot.core.properties.data.StageProps;
-import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
-import com.github.spector517.xtbot.telegram.sdk.TelegramSdkApiBot;
 import com.github.spector517.xtbot.core.application.extension.CommonMethodsLoader;
 import com.github.spector517.xtbot.core.jinja.JinjaRender;
 import com.github.spector517.xtbot.core.loader.ExternalJarClassLoader;
 import com.github.spector517.xtbot.core.loader.InternalClassLoader;
 import com.github.spector517.xtbot.core.mapper.*;
-import com.github.spector517.xtbot.core.properties.*;
+import com.github.spector517.xtbot.core.properties.YamlFilePropertiesLoader;
+import com.github.spector517.xtbot.core.properties.data.DatabaseType;
+import com.github.spector517.xtbot.core.properties.data.Properties;
+import com.github.spector517.xtbot.core.properties.data.StageProps;
+import com.github.spector517.xtbot.core.properties.exception.LoadPropertiesException;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.H2ClientRepository;
 import com.github.spector517.xtbot.core.repository.InternalClientRepository;
+import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
+import com.github.spector517.xtbot.telegram.sdk.TelegramSdkApiBot;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
@@ -29,38 +29,58 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class XTelegramBot {
 
-    public static final String VERSION = "0.3.0";
+    private static final String VERSION = "0.4.0";
+    private static final String ENV_VAR_TOKEN_NAME = "X_TELEGRAM_TOKEN";
 
     public static void main(String... args) {
         log.info("Starting XTBot v{} ...", VERSION);
         checkArguments(args);
+        var token = getToken();
+
         var yamlObjectMapper = new ObjectMapper(new YAMLFactory());
         yamlObjectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         var properties = loadProperties(args[0], yamlObjectMapper);
-        var bot = createBot(properties);
-        registerAndRunBot(bot, properties.botToken());
+
+
+        var bot = createBot(properties, token);
+        registerAndRunBot(bot);
     }
 
     private static void checkArguments(String... args) {
         if (args.length != 1) {
             log.error("Invalid number of arguments.");
             log.error("Usage: java -jar xtbot-core-{} <properties.yml>", VERSION);
-            System.exit(-1);
+            System.exit(101);
         }
+    }
+
+    private static String getToken() {
+        var token = System.getenv(ENV_VAR_TOKEN_NAME);
+        if (token == null) {
+            log.error("Missing Telegram token.");
+            log.error("Create environment variable {}=<telegram_token>", ENV_VAR_TOKEN_NAME);
+            System.exit(102);
+        }
+        return token;
     }
 
     private static Properties loadProperties(String yamlPropsLocation, ObjectMapper yamlObjectMapper) {
+        log.info("Loading bot configuration...");
         try {
-            return new YamlFilePropertiesLoader(yamlPropsLocation, yamlObjectMapper).load();
+            var properties = new YamlFilePropertiesLoader(yamlPropsLocation, yamlObjectMapper).load();
+            log.info("Configuration loaded successfully.");
+            return properties;
         } catch (LoadPropertiesException e) {
             log.error("Failed to load properties from {}: {}", yamlPropsLocation, e.getMessage());
             logException(e);
-            System.exit(-2);
+            System.exit(103);
             return null;
         }
+
     }
 
-    private static TelegramSdkApiBot createBot(Properties properties) {
+    private static TelegramSdkApiBot createBot(Properties properties, String token) {
+        log.info("Creating bot...");
         try {
             var initialStageName = properties.stages().stream()
                     .filter(StageProps::initial)
@@ -81,7 +101,7 @@ public class XTelegramBot {
                     new InternalClassLoader(), new ExternalJarClassLoader(properties.externalJarFilePath()
             ));
             var parameters = new TelegramSdkApiBot.Parameters()
-                    .telegramClient(new OkHttpTelegramClient(properties.botToken()))
+                    .telegramClient(new OkHttpTelegramClient(token))
                     .executorService(Executors.newVirtualThreadPerTaskExecutor())
                     .clientRepository(repository)
                     .properties(properties)
@@ -91,31 +111,35 @@ public class XTelegramBot {
                     .actionResultMapper(new ObjectToClassMapper(objectMapper))
                     .toEntityMapper(new ClientDataToEntityMapper(objectMapper))
                     .render(new JinjaRender())
-                    .commonMethodsLoader(commonMethodsLoader);
-            return new TelegramSdkApiBot(parameters);
+                    .commonMethodsLoader(commonMethodsLoader)
+                    .token(token);
+            var bot = new TelegramSdkApiBot(parameters);
+            log.info("Bot created successfully.");
+            return bot;
         } catch (Exception e) {
             log.error("Failed to create bot: {}", e.getMessage());
             logException(e);
-            System.exit(-3);
+            System.exit(104);
             return null;
         }
     }
 
-    private static void registerAndRunBot(TelegramSdkApiBot bot, String token) {
+    private static void registerAndRunBot(TelegramSdkApiBot bot) {
         try(var botApplication = new TelegramBotsLongPollingApplication()) {
             log.info("Registering bot in Telegram...");
-            botApplication.registerBot(token, bot);
+            botApplication.registerBot(bot.token(), bot);
             log.info("XTBot successfully registered and started.");
             Thread.currentThread().join();
         } catch (TelegramApiException e) {
             log.error("Failed to register bot: {}", e.getMessage());
-            log.debug("Stack trace", e);
-            System.exit(-4);
+            logException(e);
+            System.exit(105);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("Unknown Telegram SDK error: {}", e.getMessage());
-            System.exit(-5);
+            logException(e);
+            System.exit(106);
         }
     }
 

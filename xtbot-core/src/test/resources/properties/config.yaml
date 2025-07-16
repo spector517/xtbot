@@ -1,5 +1,4 @@
 version: 1
-bot_token: token
 stages:
   - name: init
     initial: true

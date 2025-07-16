@@ -13,10 +13,10 @@ import com.github.spector517.xtbot.core.application.gateway.GatewayException;
 import com.github.spector517.xtbot.core.application.render.Render;
 import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.mapper.MappingException;
-import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
-import com.github.spector517.xtbot.core.properties.Properties;
+import com.github.spector517.xtbot.core.properties.data.Properties;
 import com.github.spector517.xtbot.core.repository.ClientRepository;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
+import com.github.spector517.xtbot.telegram.mapper.TgSdkUpdateToDataMapper;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
@@ -30,6 +30,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.LinkPreviewOptions;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -223,6 +224,10 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
                 .chatId(chatId)
                 .text(text)
                 .parseMode(parseMode)
+                .linkPreviewOptions(LinkPreviewOptions.builder()
+                        .isDisabled(true)
+                        .build()
+                )
                 .replyMarkup(keyboardMarkup);
         try {
             log.debug("Sending message");
@@ -249,6 +254,10 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
                 .messageId(messageId)
                 .text(text)
                 .parseMode(parseMode)
+                .linkPreviewOptions(LinkPreviewOptions.builder()
+                        .isDisabled(true)
+                        .build()
+                )
                 .build();
         try {
             log.debug("Editing message text");

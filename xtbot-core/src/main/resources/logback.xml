@@ -6,7 +6,7 @@
     </encoder>
   </appender>
 
-  <logger name="com.github.spector517.xtbot" level="${X_TELEGRAM_LOG_LEVEL:-ERROR}"/>
+  <logger name="com.github.spector517.xtbot" level="${X_TELEGRAM_LOG_LEVEL:-WARN}"/>
 
   <root level="error">
     <appender-ref ref="STDOUT"/>

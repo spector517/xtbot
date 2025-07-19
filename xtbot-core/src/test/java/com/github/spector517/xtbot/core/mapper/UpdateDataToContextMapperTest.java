@@ -36,6 +36,8 @@ class UpdateDataToContextMapperTest {
         var additionalVars = Map.of("key3", "value3", "key4", (Object) "value4");
         var messageId = 1111;
         var messageText = "test";
+        var stageVarsWithReservedVars = new HashMap<>(stageVars);
+        stageVarsWithReservedVars.put("update", "reservedUpdateVar");
         var clientData = new ClientData()
                 .externalId(externalId)
                 .name(name)
@@ -43,7 +45,7 @@ class UpdateDataToContextMapperTest {
                 .previousStages(previousStages)
                 .bindNewStage(currentStage)
                 .setStageInitiated()
-                .stageVars(stageVars)
+                .stageVars(stageVarsWithReservedVars)
                 .additionalVars(additionalVars);
         var messageData = new MessageData()
                 .id(messageId)
@@ -53,23 +55,25 @@ class UpdateDataToContextMapperTest {
                 .chatId(1)
                 .message(messageData)
                 .client(clientData);
-        expectedContextMap = Map.of(
-                "update", Map.of(
-                        "message", Map.of(
-                                "id", messageId,
-                                "text", messageText
-                        )
-                ),
-                "client", Map.of(
-                        "id", externalId,
-                        "name", name,
-                        "stage", currentStage,
-                        "sent_message_ids", List.of(123),
-                        "previous_stages", List.of("stage1", "stage2"),
-                        "vars", additionalVars
-                ),
-                "vars", stageVars
+
+        var expectedUpdateMap = Map.of(
+                "message", Map.of(
+                        "id", messageId,
+                        "text", messageText
+                )
         );
+        var expectedClientMap = Map.of(
+                "id", externalId,
+                "name", name,
+                "stage", currentStage,
+                "sent_message_ids", List.of(previousSentMessageId),
+                "previous_stages", previousStages,
+                "vars", additionalVars
+        );
+        expectedContextMap = new HashMap<>();
+        expectedContextMap.put("update", expectedUpdateMap);
+        expectedContextMap.put("client", expectedClientMap);
+        expectedContextMap.putAll(stageVars);
     }
 
     @Test

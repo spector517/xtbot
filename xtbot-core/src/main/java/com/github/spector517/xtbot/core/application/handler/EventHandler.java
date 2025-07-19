@@ -82,6 +82,13 @@ public class EventHandler implements Runnable {
         Optional<Integer> sentMessageId = Optional.empty();
         var message = stage.message();
         if (message.isPresent()) {
+            var deleteId = message.get().deleteId();
+            if (deleteId.isPresent()) {
+                var output = new OutputData(updateData.chatId(), OutputType.DELETE_MESSAGE);
+                output.deleteMessageId(Integer.parseInt(deleteId.get().value(context)));
+                gateway.produce(output);
+            }
+
             var text = message.get().text();
             if (text.isPresent()) {
                 var output = message.get().id().isPresent()
@@ -97,13 +104,6 @@ public class EventHandler implements Runnable {
                 ).toList();
                 output.buttons(buttons);
                 sentMessageId = gateway.produce(output);
-            }
-
-            var deleteId = message.get().deleteId();
-            if (deleteId.isPresent()) {
-                var output = new OutputData(updateData.chatId(), OutputType.DELETE_MESSAGE);
-                output.deleteMessageId(Integer.parseInt(deleteId.get().value(context)));
-                gateway.produce(output);
             }
         }
 

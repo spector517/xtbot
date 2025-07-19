@@ -1,21 +1,5 @@
 package com.github.spector517.xtbot.core.application.config;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.github.spector517.xtbot.core.application.gateway.Gateway;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -25,12 +9,22 @@ import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorC
 import com.github.spector517.xtbot.core.application.extension.acceptor.AcceptorLoader;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorLoader;
-import com.github.spector517.xtbot.core.mapper.Mapper;
+import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.render.Render;
+import com.github.spector517.xtbot.core.mapper.Mapper;
 import com.github.spector517.xtbot.core.properties.data.Properties;
 import com.github.spector517.xtbot.core.properties.data.StageProps;
-
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 class ConfigTest {
@@ -42,7 +36,7 @@ class ConfigTest {
     @BeforeEach
     @SneakyThrows
     void setUp() {
-        var acceptorName = "xtbot.internal.callback";
+        var acceptorName = "x.accept.callback";
         var executorName = "executor";
 
         var yamlObjectMapper = new ObjectMapper(new YAMLFactory());

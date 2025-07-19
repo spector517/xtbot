@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("unchecked")
 public class Stage {
 
-    public static final String CALLBACK_ACCEPTOR_NAME = "xtbot.internal.callback";
+    public static final String CALLBACK_ACCEPTOR_NAME = "x.accept.callback";
 
     private final String name;
     private final boolean initial;

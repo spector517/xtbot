@@ -9,7 +9,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class CallbackAcceptors {
 
-    @Acceptor("xtbot.internal.callback")
+    @Acceptor("x.accept.callback")
     public boolean isAccepted(Update update, String val) {
         if (update.callback() == null) {
             return false;

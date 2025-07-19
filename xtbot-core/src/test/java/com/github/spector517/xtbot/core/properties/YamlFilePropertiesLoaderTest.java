@@ -90,7 +90,7 @@ class YamlFilePropertiesLoaderTest {
                                 null,
                                 null,
                                 null,
-                                List.of(new AcceptorProps("xtbot.internal.callback", "start")),
+                                List.of(new AcceptorProps("x.accept.callback", "start")),
                                 null,
                                 null,
                                 "start"
@@ -116,7 +116,7 @@ class YamlFilePropertiesLoaderTest {
                                 true,
                                 null,
                                 List.of(new AcceptorProps(
-                                        "xtbot.internal.callback",
+                                        "x.accept.callback",
                                         "vpn-advantages|about-procedure|vps-rent|stop")),
                                 List.of(new ActionProps(
                                                 "executor",

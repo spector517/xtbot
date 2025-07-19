@@ -9,7 +9,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class MessageAcceptors {
 
-    @Acceptor("xtbot.internal.message")
+    @Acceptor("x.accept.message")
     public boolean isAccepted(Update update, String val) {
         if (update.message() == null) {
             return false;

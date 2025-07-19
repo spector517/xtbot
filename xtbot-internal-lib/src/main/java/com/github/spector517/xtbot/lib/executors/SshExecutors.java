@@ -5,7 +5,6 @@ import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.annotation.Name;
 import com.github.spector517.xtbot.lib.executors.ssh.JSchSshConnector;
 import com.github.spector517.xtbot.lib.executors.ssh.SshCommandResult;
-
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
@@ -13,7 +12,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SshExecutors {
 
-    @Executor("xtbot.internal.check_ssh")
+    @Executor("x.exec.ssh.check")
     public boolean isHostReachable(
             @Name("host") String host,
             @Name("port") int port,
@@ -30,7 +29,7 @@ public class SshExecutors {
         }
     }
 
-    @Executor("xtbot.internal.ssh_command")
+    @Executor("x.exec.ssh.command")
     @SneakyThrows
     public SshCommandResult executeCommand(
             @Name("host") String host,

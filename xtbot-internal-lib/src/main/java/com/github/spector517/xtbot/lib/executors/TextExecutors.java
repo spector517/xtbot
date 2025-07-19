@@ -11,7 +11,7 @@ import java.util.List;
 @UtilityClass
 public class TextExecutors {
 
-    @Executor("xtbot.internal.match")
+    @Executor("x.exec.text.match")
     public boolean match(
             @Name("patterns") List<String> patterns,
             @Name("val") String val
@@ -25,7 +25,7 @@ public class TextExecutors {
         return patterns.stream().anyMatch(val::matches);
     }
 
-    @Executor("xtbot.internal.split")
+    @Executor("x.exec.text.split")
     public List<String> split(
             @Name("val") String val,
             @Name("delimiter") String delimiter

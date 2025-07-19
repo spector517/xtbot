@@ -3,7 +3,7 @@ stages:
   - name: init
     initial: true
     accept:
-      - acceptor: xtbot.internal.callback
+      - acceptor: x.accept.callback
         val: start
     next: start
 
@@ -19,7 +19,7 @@ stages:
             data: button2_data
     remove_buttons: true
     accept:
-      - acceptor: xtbot.internal.callback
+      - acceptor: x.accept.callback
         val: vpn-advantages|about-procedure|vps-rent|stop
     actions:
       - exec: executor

@@ -3,5 +3,5 @@ COPY ./ /tmp
 RUN mvn -f /tmp/pom.xml clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
-COPY --from=builder /tmp/xtbot-telegram/target/xtbot-telegram-0.3.0-SNAPSHOT.jar /app/xtbot.jar
+COPY --from=builder /tmp/xtbot-telegram/target/xtbot-telegram-0.4.0-SNAPSHOT.jar /app/xtbot.jar
 ENTRYPOINT ["java", "-jar", "/app/xtbot.jar"]

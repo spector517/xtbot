@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
+@DisplayName("Load config test")
 class ConfigTest {
 
     private Gateway gateway;
@@ -49,8 +50,8 @@ class ConfigTest {
         properties = spy(props);
 
         Render render = mock(Render.class);
-        AcceptorLoader acceptorLoader = mock(AcceptorLoader.class);
-        ExecutorLoader executorLoader = mock(ExecutorLoader.class);
+        var acceptorLoader = mock(AcceptorLoader.class);
+        var executorLoader = mock(ExecutorLoader.class);
 
         var acceptor = mock(Method.class);
         var acceptorAnnotation = mock(Acceptor.class);
@@ -82,13 +83,13 @@ class ConfigTest {
     }
 
     @Test
-    @DisplayName("Load config: success")
+    @DisplayName("Success load")
     void loadConfig_0() {
         assertDoesNotThrow(() -> new Config(gateway));
     }
 
     @Test
-    @DisplayName("Load config: duplicates stages detected")
+    @DisplayName("Duplicates stages detected")
     void loadConfig_1() {
         var stage = properties.stages().getFirst();
         var mockStage = mock(StageProps.class);
@@ -107,7 +108,7 @@ class ConfigTest {
     }
 
     @Test
-    @DisplayName("Load config: initial stage not found")
+    @DisplayName("Initial stage not found")
     void loadConfig_2() {
         var stagesProps = properties.stages().stream().map(stageProps -> {
             var spyStage = spy(stageProps);
@@ -122,7 +123,7 @@ class ConfigTest {
     }
 
     @Test
-    @DisplayName("Load config: more one initial stages found")
+    @DisplayName("More one initial stages found")
     void loadConfig_3() {
         List<StageProps> stagesProps = properties.stages().stream().map(stageProps -> {
             var spyStage = spy(stageProps);
@@ -142,7 +143,7 @@ class ConfigTest {
     }
 
     @Test
-    @DisplayName("Load config: fail stage not found")
+    @DisplayName("Fail stage not found")
     void loadConfig_4() {
         var stagesProps = properties.stages().stream().map(stageProps -> {
             var spyStage = spy(stageProps);
@@ -157,7 +158,7 @@ class ConfigTest {
     }
 
     @Test
-    @DisplayName("Load config: more one fail stages found")
+    @DisplayName("More one fail stages found")
     void loadConfig_5() {
         List<StageProps> stagesProps = properties.stages().stream().map(stageProps -> {
             var spyStage = spy(stageProps);

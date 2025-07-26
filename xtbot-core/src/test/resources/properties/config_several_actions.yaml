@@ -1,11 +1,5 @@
 version: 1
 stages:
-  - name: init
-    initial: true
-    accept:
-      - x.accept.callback: start
-    next: start
-
   - name: start
     fail: true
     message:
@@ -20,10 +14,12 @@ stages:
     accept:
       - x.accept.callback: vpn-advantages|about-procedure|vps-rent|stop
     actions:
-      - executor:
+      - executor1:
           arg1: value1
           arg2: value2
-        register: var_name
+        executor2:
+          arg1: value1
+          arg2: value2
     save:
       some_key: some_value
     next: null

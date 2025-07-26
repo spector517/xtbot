@@ -1,13 +1,6 @@
 version: 1
 stages:
-  - name: init
-    initial: true
-    accept:
-      - x.accept.callback: start
-    next: start
-
   - name: start
-    fail: true
     message:
       parse_mode: plain
       text: Text of message
@@ -18,7 +11,8 @@ stages:
             data: button2_data
     remove_buttons: true
     accept:
-      - x.accept.callback: vpn-advantages|about-procedure|vps-rent|stop
+      - some_acceptor1: test1
+        some_acceptor2: test2
     actions:
       - executor:
           arg1: value1

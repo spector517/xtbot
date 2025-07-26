@@ -35,7 +35,8 @@ public class EventHandler implements Runnable {
         try {
             process();
         } catch(Exception ex) {
-            log.warn("Event processing failed: {}", ex.getMessage());
+            log.warn("{} while event processing: {}", ex.getClass().getName(), ex.getMessage());
+            log.debug("Stack trace:", ex);
             log.warn("Trying to bind fail stage...");
             bindFailStage();
             process();

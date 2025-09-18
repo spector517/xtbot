@@ -40,13 +40,13 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 @Slf4j
 @Accessors(fluent = true)
 public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer, Gateway {
+
+    public static final long SHUTDOWN_TIMEOUT_SECONDS = 20L;
 
     private final AbstractTelegramClient telegramClient;
     private final ExecutorService executorService;
@@ -64,6 +64,8 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
 
     private final Map<Long, Future<?>> inProgressEvents;
     private final Config config;
+
+    private boolean active;
 
     @Data
     @Accessors(fluent = true, chain = true)
@@ -100,6 +102,8 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
 
         this.inProgressEvents = new ConcurrentHashMap<>();
         this.config = new Config(this);
+
+        this.active = true;
     }
 
     @Override
@@ -109,12 +113,16 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
 
     @Override
     public synchronized void consume(org.telegram.telegrambots.meta.api.objects.Update update) {
+        if (!active) {
+            log.warn("Bot is shutting down. Skipping update.");
+            return;
+        }
         try {
             log.debug("Received update: {}", update);
             var clientId = TgSdkUpdateToDataMapper.getClientId(update);
             MDC.put(ClientData.EXTERNAL_ID_KEY, String.valueOf(clientId));
             if (inProgressEvents.containsKey(clientId)) {
-                log.warn("Client has uncompleted events. Skipping.");
+                log.warn("Client has uncompleted events. Skipping update.");
                 return;
             }
 
@@ -122,8 +130,14 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
             var handler = consume(updateData, config);
             var wrappedHandler = wrapHandler(handler, updateData);
             log.info("Submitting event");
-            inProgressEvents.put(clientId, executorService.submit(wrappedHandler));
+            var futureTask = executorService.submit(wrappedHandler);
+            inProgressEvents.put(clientId, futureTask);
 
+        } catch (RejectedExecutionException ex) {
+            log.error(
+                    "Event processing rejected. Executor service is shutting down or overloaded: {}",
+                    ex.getMessage()
+            );
         } catch (MappingException ex) {
             log.warn("Failed mapping update to data: {}", ex.getMessage());
         } catch (GatewayException ex) {
@@ -188,21 +202,44 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
         };
     }
 
+    public synchronized void shutdown() {
+        try {
+            log.info("Shutting down...");
+            active = false;
+            executorService.shutdown();
+            log.info("Waiting for tasks to complete.");
+            var tasksCompleted = executorService.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (tasksCompleted) {
+                log.info("All tasks completed successfully.");
+            } else {
+                log.warn("Some tasks did not complete within the timeout. Forcing shutdown.");
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            log.error("Shutdown interrupted: {}", e.getMessage());
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.error("{} while shutting down: {}", e.getClass().getName(), e.getMessage());
+        }
+    }
+
     private Runnable wrapHandler(Runnable handler, UpdateData updateData) {
         var mdsContext = MDC.getCopyOfContextMap();
         return () -> {
+            Optional<ClientEntity> entity = Optional.empty();
             try {
                 MDC.setContextMap(mdsContext);
-                log.info("Starting event processing");
+                log.info("Starting event processing...");
                 handler.run();
-                var entity = toEntityMapper.map(updateData.client());
-                clientRepository.save(entity);
-                log.info("Event processing completed successfully");
+                entity = Optional.of(toEntityMapper.map(updateData.client()));
+                log.info("Event processed successfully.");
             } catch (Exception ex) {
-                log.error("Event processing failed: {}", ex.getMessage());
+                log.error("Event processing failed. {}: {}", ex.getClass().getName(), ex.getMessage());
                 log.debug("Stack trace:", ex);
             } finally {
+                entity.ifPresent(clientRepository::save);
                 inProgressEvents.remove(updateData.client().externalId());
+                log.info("Changes commited");
                 MDC.clear();
             }
         };

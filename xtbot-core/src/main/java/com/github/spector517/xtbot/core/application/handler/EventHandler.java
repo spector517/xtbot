@@ -44,6 +44,9 @@ public class EventHandler implements Runnable {
     }
 
     private void process() throws GatewayException, MappingException {
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
         if (!updateData.client().stageInitiated()) {
             initiateStage();
             if (stage.autocomplete()) {

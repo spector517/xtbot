@@ -41,8 +41,8 @@ public class XTelegramBot {
         yamlObjectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         var properties = loadProperties(args[0], yamlObjectMapper);
 
-
         var bot = createBot(properties, token);
+        registerShutdownHook(bot);
         registerAndRunBot(bot);
     }
 
@@ -150,6 +150,10 @@ public class XTelegramBot {
         return properties.database().type() == DatabaseType.H2
                 ? new H2ClientRepository(Path.of(properties.database().h2().directory()))
                 : new InternalClientRepository();
+    }
+
+    private static void registerShutdownHook(TelegramSdkApiBot bot) {
+        Runtime.getRuntime().addShutdownHook(new Thread(bot::shutdown));
     }
 
     private static void logException(Exception e) {

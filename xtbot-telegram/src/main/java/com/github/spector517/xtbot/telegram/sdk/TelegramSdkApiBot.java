@@ -217,6 +217,7 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
             }
         } catch (InterruptedException e) {
             log.error("Shutdown interrupted: {}", e.getMessage());
+            executorService.shutdownNow();
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("{} while shutting down: {}", e.getClass().getName(), e.getMessage());

@@ -12,10 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,6 +24,7 @@ public class EventHandler implements Runnable {
 
     private Map<String, Object> context;
     private Stage stage;
+    private long sentTypingAt;
 
     @Override
     @SneakyThrows
@@ -64,7 +62,6 @@ public class EventHandler implements Runnable {
 
     private void initiateStage() throws GatewayException, MappingException {
         log.debug("Initiating stage...");
-        gateway.produce(new OutputData(updateData.chatId(), OutputType.TYPING));
         updateContext();
 
         var previousStageName = updateData.client().getPreviousStage();
@@ -107,6 +104,9 @@ public class EventHandler implements Runnable {
                         ).toList()
                 ).toList();
                 output.buttons(buttons);
+                if (output.type() == OutputType.SEND_MESSAGE) {
+                    resetSentTyping();
+                }
                 sentMessageId = gateway.produce(output);
             }
         }
@@ -116,7 +116,7 @@ public class EventHandler implements Runnable {
         log.debug("Stage initiated.");
     }
 
-    private void completeStage() throws MappingException {
+    private void completeStage() throws MappingException, GatewayException {
         updateContext();
         var isNotAccepted = stage.acceptors().stream().noneMatch(acceptor -> {
             log.debug("Run acceptor: {}", acceptor.name());
@@ -128,8 +128,9 @@ public class EventHandler implements Runnable {
             log.warn("Update not accepted. Skipped.");
             return;
         }
-        log.debug("Completing stage...");
 
+        log.debug("Completing stage...");
+        checkAndSendTyping();
         updateData.client().stageVars(new HashMap<>());
         for (var action : stage.actions()) {
             log.debug("Run action: {}", action.name());
@@ -139,6 +140,7 @@ public class EventHandler implements Runnable {
             log.debug("Register action result to var '{}'", resultVar);
             updateData.client().updateStageVars(Map.of(resultVar, result));
             updateContext();
+            checkAndSendTyping();
         }
         var currentStageAdditionalVars = stage.getAdditionalVars(context);
         updateData.client().updateAdditionalVars(currentStageAdditionalVars);
@@ -180,5 +182,19 @@ public class EventHandler implements Runnable {
 
     private void updateContext() throws MappingException {
         context = gateway.getContextMapper().map(updateData);
+    }
+
+    private void checkAndSendTyping() throws GatewayException {
+        if (stage.sendTyping()) {
+            var currentMillis = System.currentTimeMillis();
+            if (sentTypingAt == 0 || currentMillis - sentTypingAt >= gateway.getSendTypingInterval()) {
+                gateway.produce(new OutputData(updateData.chatId(), OutputType.TYPING));
+                sentTypingAt = currentMillis;
+            }
+        }
+    }
+
+    private void resetSentTyping() {
+        sentTypingAt = 0;
     }
 }

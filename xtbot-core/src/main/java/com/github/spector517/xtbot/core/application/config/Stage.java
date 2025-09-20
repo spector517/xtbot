@@ -27,6 +27,7 @@ public class Stage {
     private final Message message;
     private final boolean removeButtons;
     private final boolean autocomplete;
+    private final boolean sendTyping;
     private final List<Acceptor> acceptors;
     private final List<Action> actions;
     private final Map<String, Object> save;
@@ -48,45 +49,41 @@ public class Stage {
             : new Message(props.message(), gateway);
         this.removeButtons = props.removeButtons() == null || props.removeButtons();
         this.autocomplete = props.autocomplete() != null && props.autocomplete();
+        this.sendTyping = props.sendTyping() == null || props.sendTyping();
 
-        List<Acceptor> definedAcceptors;
-        if (props.accept() != null) {
-            definedAcceptors = props.accept().stream().map(acceptorProps ->
-                    new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader)
-            ).toList();
-        } else {
-            definedAcceptors = List.of();
-        }
 
-        if (props.actions() != null) {
-            this.actions = props.actions().stream().map(actionProps ->
+        List<Acceptor> definedAcceptors = props.accept() != null
+                ? props.accept().stream().map(acceptorProps ->
+                        new Acceptor(acceptorProps, gateway, acceptorChecker, acceptorLoader)
+                    ).toList()
+                : List.of();
+
+        this.actions = props.actions() != null
+            ? props.actions().stream().map(actionProps ->
                     new Action(actionProps, gateway, executorChecker, executorLoader)
-            ).toList();
-        } else {
-            this.actions = List.of();
-        }
+                ).toList()
+            : List.of();
 
-        if (props.save() != null) {
-            this.save = (Map<String, Object>) CommonUtils.getTemplatedMap(props.save(), gateway.getRender());
-        } else {
-            this.save = Map.of();
-        }
+        this.save = props.save() != null
+                ? (Map<String, Object>) CommonUtils.getTemplatedMap(props.save(), gateway.getRender())
+                : Map.of();
 
         this.next = props.next() == null || props.next().isBlank() 
             ? null
             : new Template(gateway.getRender(), props.next());
 
-        var additionalAcceptors = new ArrayList<Acceptor>();
-        if (message != null) {
-            message.buttons().stream().flatMap(Collection::stream).forEach(button ->
-                additionalAcceptors.add(new Acceptor(
-                    new AcceptorProps(CALLBACK_ACCEPTOR_NAME, button.data().rawValue()),
-                    gateway,
-                    acceptorChecker,
-                    acceptorLoader
-                ))
-            );
-        }
+
+        List<Acceptor> additionalAcceptors = message != null
+                ? message.buttons().stream().flatMap(Collection::stream).map(button ->
+                        new Acceptor(
+                                new AcceptorProps(CALLBACK_ACCEPTOR_NAME, button.data().rawValue()),
+                                gateway,
+                                acceptorChecker,
+                                acceptorLoader
+                        )
+                    ).toList()
+                : List.of();
+
         this.acceptors = this.autocomplete
             ? List.of() 
             : Stream.concat(definedAcceptors.stream(), additionalAcceptors.stream()).toList();

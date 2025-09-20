@@ -49,4 +49,6 @@ public interface Gateway {
     AcceptorLoader getAcceptorLoader();
 
     ExecutorLoader getExecutorLoader();
+
+    long getSendTypingInterval();
 }

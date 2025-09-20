@@ -47,6 +47,7 @@ import java.util.concurrent.*;
 public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer, Gateway {
 
     public static final long SHUTDOWN_TIMEOUT_SECONDS = 20L;
+    public static final long TELEGRAM_TYPING_INTERVAL = 8000L;
 
     private final AbstractTelegramClient telegramClient;
     private final ExecutorService executorService;
@@ -179,6 +180,10 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
 
     public ExecutorLoader getExecutorLoader() {
         return (ExecutorLoader) getAcceptorLoader();
+    }
+
+    public long getSendTypingInterval() {
+        return TELEGRAM_TYPING_INTERVAL;
     }
 
     @Override

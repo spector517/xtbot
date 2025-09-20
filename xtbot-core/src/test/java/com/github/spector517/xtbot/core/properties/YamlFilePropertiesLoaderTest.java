@@ -90,6 +90,7 @@ class YamlFilePropertiesLoaderTest {
                                 null,
                                 null,
                                 null,
+                                null,
                                 List.of(new AcceptorProps("x.accept.callback", "start")),
                                 null,
                                 null,
@@ -114,6 +115,7 @@ class YamlFilePropertiesLoaderTest {
                                         )
                                 ),
                                 true,
+                                null,
                                 null,
                                 List.of(new AcceptorProps(
                                         "x.accept.callback",

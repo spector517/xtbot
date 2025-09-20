@@ -11,6 +11,7 @@ public record StageProps(
         MessageProps message,
         Boolean removeButtons,
         Boolean autocomplete,
+        Boolean sendTyping,
         List<AcceptorProps> accept,
         List<ActionProps> actions,
         Map<String, Object> save,

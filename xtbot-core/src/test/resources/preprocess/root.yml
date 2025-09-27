@@ -6,3 +6,4 @@ cars:
   !include cars/bmw.yml X5 black '$110 000'
 company_id: 123456
 !include 'footer.yml'
+!include ps.yml

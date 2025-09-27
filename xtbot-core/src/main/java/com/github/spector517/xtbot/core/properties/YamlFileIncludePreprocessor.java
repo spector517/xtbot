@@ -21,11 +21,11 @@ class YamlFileIncludePreprocessor {
 
     private static final Pattern ARG_REPLACEMENT_PATTERN = Pattern.compile("!\\$(\\d+)");
     private static final Pattern INCLUDE_PATTERN = Pattern.compile(
-            "^(\\s*)!include\\s+(?:'([^']+)'|\"([^\"]+)\"|([^\\s'\"]+))(\\s+.+|\\s+$|$)",
+            "^(\\p{Blank}*)!include\\p{Blank}+(?:'([^']+)'|\"([^\"]+)\"|([^\\s'\"]+))(\\p{Blank}+.+|\\p{Blank}+$|$)",
             Pattern.MULTILINE
     );
     private static final Pattern INCLUDE_ARGS_PATTERN = Pattern.compile(
-            "^(?:(?:'[^']+'|\"[^\"]+\"|[^\\s'\"]+)(?:\\s+|$))+$"
+            "^(?:(?:'[^']+'|\"[^\"]+\"|[^\\s'\"]+)(?:\\p{Blank}+|$))+$"
     );
 
     public String preprocess(String content, Path rootPath) throws IncludePreprocessorException {

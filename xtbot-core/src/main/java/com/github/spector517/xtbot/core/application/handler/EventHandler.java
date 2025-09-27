@@ -160,6 +160,7 @@ public class EventHandler implements Runnable {
             }
             nextStage = config.getStage(stage.next().get().value(context));
         } catch(Exception ex) {
+            log.error("{} while binding next stage: {}", ex.getClass().getName(), ex.getMessage());
             nextStage = config.failStage();
         }
         stage = nextStage;

@@ -1,5 +1,8 @@
 package com.github.spector517.xtbot.core.application.extension.executor;
 
+import com.github.spector517.xtbot.api.annotation.Default;
+import com.github.spector517.xtbot.api.utils.DefaultUtils;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -43,56 +46,63 @@ public class ExecutorCheckerV1 implements ExecutorChecker {
 
     private void checkArgumentsNames(Method method, Map<String, Object> arguments)
             throws ExecutorCheckFailedException {
-        var actualNames = Stream.of(method.getParameters())
+        var existingNames = Stream.of(method.getParameters())
                 .map(this.parameterNameDetector::getParameterName)
                 .toList();
-        var expectedNames = arguments.keySet();
-        var missing = actualNames.stream().filter(name -> !expectedNames.contains(name)).toList();
-        var unknown = expectedNames.stream().filter(name ->!actualNames.contains(name)).toList();
-        if (!missing.isEmpty()) {
-            if (!unknown.isEmpty()) {
+        var providedNames = arguments.keySet();
+        var missingNames = Stream.of(method.getParameters())
+                .filter(par -> !par.isAnnotationPresent(Default.class))
+                .map(this.parameterNameDetector::getParameterName)
+                .filter(name -> !providedNames.contains(name))
+                .toList();
+        var unknownNames = providedNames.stream()
+                .filter(name ->!existingNames.contains(name))
+                .toList();
+        if (!missingNames.isEmpty()) {
+            if (!unknownNames.isEmpty()) {
                 throw new ExecutorCheckFailedException("Missing arguments: %s, but got: %s".formatted(
-                    String.join(", ", missing), 
-                    String.join(", ", unknown)
+                    String.join(", ", missingNames),
+                    String.join(", ", unknownNames)
                 ));
             } else {
                 throw new ExecutorCheckFailedException(
-                    "Missing arguments: ".concat(String.join(", ", missing))
+                    "Missing arguments: ".concat(String.join(", ", missingNames))
                 );
             }
-        } else {
-            if (!unknown.isEmpty()) {
-                throw new ExecutorCheckFailedException("Unknown arguments: "
-                        .concat(String.join(", ", unknown))
-                );
-            }
+        }
+        if (!unknownNames.isEmpty()) {
+            throw new ExecutorCheckFailedException("Unknown arguments: "
+                    .concat(String.join(", ", unknownNames))
+            );
         }
     }
 
     private void checkArgumentsTypes(Method method, Map<String, Object> arguments) 
         throws ExecutorCheckFailedException 
     {
-        for (var parameter : method.getParameters()) {
-            var parameterName = parameterNameDetector.getParameterName(parameter);
-            var argument = arguments.get(parameterName);
-            var expectedType = parameter.getType().isPrimitive()
-                    ? PRIMITIVES_MAP.get(parameter.getType())
-                    : parameter.getType();
-            var actualType = argument.getClass();
-            if (!ALL_SUPPORTED_TYPES.contains(expectedType)) {
-                throw new ExecutorCheckFailedException("Unsupported type '%s'".formatted(expectedType));
+        for (var existingArgument : method.getParameters()) {
+            var existingArgumentName = parameterNameDetector.getParameterName(existingArgument);
+            var providedArgument = arguments.containsKey(existingArgumentName)
+                    ? arguments.get(existingArgumentName)
+                    : DefaultUtils.getDefaultValue(existingArgument);
+            var existingType = existingArgument.getType().isPrimitive()
+                    ? PRIMITIVES_MAP.get(existingArgument.getType())
+                    : existingArgument.getType();
+            var providedType = providedArgument.getClass();
+            if (!ALL_SUPPORTED_TYPES.contains(existingType)) {
+                throw new ExecutorCheckFailedException("Unsupported type '%s'".formatted(existingType));
             }
-            if (CONTAINER_TYPES.contains(expectedType)) {
-                if (!expectedType.isAssignableFrom(actualType)) {
+            if (CONTAINER_TYPES.contains(existingType)) {
+                if (!existingType.isAssignableFrom(providedType)) {
                     throw new ExecutorCheckFailedException(
                             "For argument '%s' expected implementation of '%s' but got '%s'"
-                                    .formatted(parameterName, parameter.getType(), actualType)
+                                    .formatted(existingArgumentName, existingArgument.getType(), providedType)
                     );
                 }
-            } else if (actualType != expectedType) {
+            } else if (providedType != existingType) {
                 throw new ExecutorCheckFailedException(
-                        "Argument '%s' has type '%s' but expected '%s"
-                                .formatted(parameterName, actualType, parameter.getType())
+                        "Argument '%s' has type '%s' but expected '%s'"
+                                .formatted(existingArgumentName, providedType, existingArgument.getType())
                 );
             }
         }

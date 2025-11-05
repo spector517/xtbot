@@ -1,5 +1,6 @@
 package com.github.spector517.xtbot.core.application.config;
 
+import com.github.spector517.xtbot.api.annotation.Default;
 import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorCheckFailedException;
 import com.github.spector517.xtbot.core.application.extension.executor.ExecutorChecker;
@@ -46,17 +47,32 @@ class ActionTest {
         methodName = "method";
         var paramName1 = "arg1";
         var paramName2 = "arg2";
+        var paramName3 = "arg3";
         args = Map.of(paramName2, "value2", paramName1, 1);
         method = mock(Method.class);
         resultVarName = "var_name";
         var param1 = mock(Parameter.class);
         var param2 = mock(Parameter.class);
-        var annotation = mock(Executor.class);
-        when(annotation.value()).thenReturn("test");
+        var param3 = mock(Parameter.class);
+
+        var componentAnnotation = mock(Executor.class);
+        when(componentAnnotation.value()).thenReturn("test");
+        var param2DefaultAnnotation = mock(Default.class);
+        when(param2DefaultAnnotation.type()).thenReturn(Default.Type.STRING);
+        when(param2DefaultAnnotation.value()).thenReturn("defaultValue2");
+        var param3DefaultAnnotation = mock(Default.class);
+        when(param3DefaultAnnotation.type()).thenReturn(Default.Type.DOUBLE);
+        when(param3DefaultAnnotation.doubleValue()).thenReturn(2.04);
+
         when(param1.getName()).thenReturn(paramName1);
         when(param2.getName()).thenReturn(paramName2);
-        when(method.getParameters()).thenReturn(new Parameter[]{param1, param2});
-        when(method.getAnnotation(Executor.class)).thenReturn(annotation);
+        when(param2.isAnnotationPresent(Default.class)).thenReturn(true);
+        when(param2.getAnnotation(Default.class)).thenReturn(param2DefaultAnnotation);
+        when(param3.getName()).thenReturn(paramName3);
+        when(param3.isAnnotationPresent(Default.class)).thenReturn(true);
+        when(param3.getAnnotation(Default.class)).thenReturn(param3DefaultAnnotation);
+        when(method.getParameters()).thenReturn(new Parameter[]{param1, param2, param3});
+        when(method.getAnnotation(Executor.class)).thenReturn(componentAnnotation);
 
         actionProps = new ActionProps(methodName, args, resultVarName);
 
@@ -123,7 +139,7 @@ class ActionTest {
     void execute_1() {
         var result = "result";
         when(method.getReturnType()).thenReturn((Class) String.class);
-        when(method.invoke(null, 1, "value2")).thenReturn(result);
+        when(method.invoke(null, 1, "value2", 2.04)).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var actualResult = action.execute(context);
@@ -139,7 +155,7 @@ class ActionTest {
         var result = Map.of("key", "value");
         when(method.getReturnType()).thenReturn((Class) getClass());
         when(gateway.getActionResultMapper().map(result, Map.class)).thenReturn(result);
-        when(method.invoke(null, 1, "value2")).thenReturn(result);
+        when(method.invoke(null, 1, "value2", 2.04)).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var actualResult = action.execute(context);
@@ -157,7 +173,7 @@ class ActionTest {
         var result = List.of("value1", "value2");
         when(method.getReturnType()).thenReturn((Class) Object[].class);
         when(gateway.getActionResultMapper().map(result, List.class)).thenReturn(result);
-        when(method.invoke(null, 1, "value2")).thenReturn(result);
+        when(method.invoke(null, 1, "value2", 2.04)).thenReturn(result);
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
         var actualResult = action.execute(context);
@@ -173,7 +189,7 @@ class ActionTest {
     @SneakyThrows
     void execute_4() {
         when(method.getReturnType()).thenReturn((Class) getClass());
-        when(method.invoke(null, 1, "value2"))
+        when(method.invoke(null, 1, "value2", 2.04))
             .thenThrow(new InvocationTargetException(new Exception()));
 
         var action = new Action(actionProps, gateway, executorChecker, executorLoader);
@@ -252,5 +268,23 @@ class ActionTest {
 
         assertEquals(expectedResult, actualResult);
         verify(method).invoke(null);
+    }
+
+    @Test
+    @DisplayName("Execute: with default args")
+    @SneakyThrows
+    void execute_7() {
+        args = Map.of("arg1", 1);
+        actionProps = new ActionProps(methodName, args, resultVarName);
+        var result = "result";
+        when(method.getReturnType()).thenReturn((Class) String.class);
+        when(method.invoke(null, 1, "defaultValue2", 2.04)).thenReturn(result);
+
+        var action = new Action(actionProps, gateway, executorChecker, executorLoader);
+        var actualResult = action.execute(context);
+
+        verify(method).invoke(null, 1, "defaultValue2", 2.04);
+        verify(gateway.getActionResultMapper(), never()).map(any(), any(Class.class));
+        assertEquals(result, actualResult);
     }
 }

@@ -1,6 +1,8 @@
 package com.github.spector517.xtbot.core.application.config;
 
+import com.github.spector517.xtbot.api.annotation.Default;
 import com.github.spector517.xtbot.api.annotation.Executor;
+import com.github.spector517.xtbot.api.utils.DefaultUtils;
 import com.github.spector517.xtbot.core.application.extension.executor.*;
 import com.github.spector517.xtbot.core.application.gateway.Gateway;
 import com.github.spector517.xtbot.core.application.utils.CommonUtils;
@@ -9,10 +11,10 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.Parameter;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 @Accessors(fluent = true)
@@ -36,7 +38,7 @@ public class Action {
     Action(ActionProps props, Gateway gateway, ExecutorChecker executorChecker, ExecutorLoader executorLoader) {
         this.gateway = gateway;
         Map<String, Object> execArgs = props.args() == null ? Map.of() : props.args();
-        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(execArgs, gateway.getRender());
+        var args = new HashMap<>(execArgs);
         this.register = Objects.requireNonNullElse(props.register(), "_");
         try {
             var executor = executorLoader.getExecutor(props.exec());
@@ -46,6 +48,15 @@ public class Action {
         } catch (ExecutorNotFoundException | ExecutorCheckFailedException ex) {
             throw new LoadConfigException(ex);
         }
+        var defaultArgs = Stream.of(this.exec.getParameters())
+                .filter(par -> par.isAnnotationPresent(Default.class))
+                .filter(par -> !execArgs.containsKey(par.getName()))
+                .collect(Collectors.toMap(
+                        Parameter::getName,
+                        DefaultUtils::getDefaultValue
+                ));
+        args.putAll(defaultArgs);
+        this.templateArgs = (Map<String, Object>) CommonUtils.getTemplatedMap(args, gateway.getRender());
         this.parameterNameDetector = new DefaultParameterNameDetector();
         this.isSimpleMapping = simpleTypes.contains(exec.getReturnType()) || exec.getReturnType().isPrimitive();
     }

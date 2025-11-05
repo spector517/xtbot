@@ -1,6 +1,7 @@
 package com.github.spector517.xtbot.lib.executors;
 
 import com.github.spector517.xtbot.api.annotation.BotComponent;
+import com.github.spector517.xtbot.api.annotation.Default;
 import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.annotation.Name;
 import com.github.spector517.xtbot.lib.executors.ssh.JSchSshConnector;
@@ -15,10 +16,10 @@ public class SshExecutors {
     @Executor("x.exec.ssh.check")
     public boolean isHostReachable(
             @Name("host") String host,
-            @Name("port") int port,
+            @Name("port") @Default(intValue = 22) int port,
             @Name("login") String login,
             @Name("password") String password,
-            @Name("timeout") int timeout
+            @Name("timeout") @Default(intValue = 5_000) int timeout
     ) {
         try(var sshConnector = new JSchSshConnector(host, port, login, password, timeout)) {
             var message = "ping";
@@ -33,10 +34,10 @@ public class SshExecutors {
     @SneakyThrows
     public SshCommandResult executeCommand(
             @Name("host") String host,
-            @Name("port") int port,
+            @Name("port") @Default(intValue = 22) int port,
             @Name("login") String login,
             @Name("password") String password,
-            @Name("timeout") int timeout,
+            @Name("timeout") @Default(intValue = 20_000) int timeout,
             @Name("command") String command
     ) {
         try(var sshConnector = new JSchSshConnector(host, port, login, password, timeout)) {

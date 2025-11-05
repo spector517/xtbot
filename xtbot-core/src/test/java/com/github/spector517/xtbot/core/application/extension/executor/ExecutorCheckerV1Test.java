@@ -1,8 +1,10 @@
 package com.github.spector517.xtbot.core.application.extension.executor;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.github.spector517.xtbot.core.common.TestComponent;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -10,13 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import com.github.spector517.xtbot.core.common.TestComponent;
-
-import lombok.SneakyThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExecutorCheckerV1Test {
 
@@ -24,6 +20,7 @@ class ExecutorCheckerV1Test {
     private Map<String, Object> primitiveArgs;
     private Map<String, Object> containerArgs;
     private Map<String, Object> mixedArgs;
+    private Map<String, Object> mixedWithDefaultsArgs;
     private Class<?> testComponent;
     private String testComponentMethodName;
 
@@ -52,6 +49,9 @@ class ExecutorCheckerV1Test {
                 "data", Map.of("someKey", "someValue",
                         "anotherKey", false
                 )
+        ));
+        mixedWithDefaultsArgs = new HashMap<>(Map.of(
+                "name", "Alex"
         ));
         testComponent = TestComponent.class;
         testComponentMethodName = "execute";
@@ -168,7 +168,7 @@ class ExecutorCheckerV1Test {
                 () -> checker.checkExecutor(method, mixedArgs)
         );
         assertEquals(
-                "Argument 'age' has type '%s' but expected '%s".formatted(String.class, Integer.class),
+                "Argument 'age' has type '%s' but expected '%s'".formatted(String.class, Integer.class),
                 ex.getMessage()
         );
     }
@@ -209,6 +209,46 @@ class ExecutorCheckerV1Test {
         var method = getTestExecutor();
         var checker = new ExecutorCheckerV1();
         assertDoesNotThrow(() -> checker.checkExecutor(method, Map.of()));
+    }
+
+    @Test
+    @DisplayName("Arguments with default values: success")
+    void checkExecutor_12() {
+        var method = getTestExecutor(String.class, String.class, Integer.class, Boolean.class);
+        var checker = new ExecutorCheckerV1();
+        assertDoesNotThrow(() -> checker.checkExecutor(method, mixedWithDefaultsArgs));
+    }
+
+    @Test
+    @DisplayName("Arguments with default values: invalid provided value")
+    void checkExecutor_13() {
+        var method = getTestExecutor(String.class, String.class, Integer.class, Boolean.class);
+        var checker = new ExecutorCheckerV1();
+        mixedWithDefaultsArgs.put("surname", 10);
+
+        var ex = assertThrows(
+                ExecutorCheckFailedException.class,
+                () -> checker.checkExecutor(method, mixedWithDefaultsArgs)
+        );
+        assertEquals(
+                "Argument 'surname' has type 'class java.lang.Integer' but expected 'class java.lang.String'",
+                ex.getMessage()
+        );
+    }
+
+    @Test
+    @DisplayName("Arguments with default values: invalid default value")
+    void checkExecutor_14() {
+        var method = getTestExecutor(String.class, String.class, Double.class, Integer.class);
+        var checker = new ExecutorCheckerV1();
+        var ex = assertThrows(
+                ExecutorCheckFailedException.class,
+                () -> checker.checkExecutor(method, mixedWithDefaultsArgs)
+        );
+        assertEquals(
+                "Argument 'age' has type 'class java.lang.Boolean' but expected 'class java.lang.Integer'",
+                ex.getMessage()
+        );
     }
     
 

@@ -1,6 +1,7 @@
 package com.github.spector517.xtbot.core.common;
 
 import com.github.spector517.xtbot.api.annotation.Acceptor;
+import com.github.spector517.xtbot.api.annotation.Default;
 import com.github.spector517.xtbot.api.annotation.Executor;
 import com.github.spector517.xtbot.api.annotation.Name;
 import com.github.spector517.xtbot.api.dto.Update;
@@ -64,6 +65,26 @@ public class TestComponent {
 
     @Executor("exec7")
     public static void execute() {
+        throw new UnsupportedOperationException("Unsupported call test executor");
+    }
+
+    @Executor("exec8")
+    public static void execute(
+            String name,
+            @Default(value = "Alex") String surname,
+            @Default(intValue = 32) Integer age,
+            @Default(boolValue = true) Boolean male
+    ) {
+        throw new UnsupportedOperationException("Unsupported call test executor");
+    }
+
+    @Executor("exec9")
+    public static void execute(
+            String name,
+            @Default(value = "Alex") String surname,
+            @Default(doubleValue = 7.5) Double dickSize,
+            @Default(boolValue = true, type = Default.Type.BOOLEAN) Integer age
+    ) {
         throw new UnsupportedOperationException("Unsupported call test executor");
     }
 

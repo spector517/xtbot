@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +66,7 @@ class ConfigTest {
         when(executorAnnotation.value()).thenReturn("test");
         when(executor.getAnnotation(Executor.class)).thenReturn(executorAnnotation);
         when(executor.getReturnType()).thenReturn((Class) int.class);
+        when(executor.getParameters()).thenReturn(new Parameter[0]);
 
         when(acceptorLoader.getAcceptor(acceptorName)).thenReturn(acceptor);
         when(executorLoader.getExecutor(executorName)).thenReturn(executor);

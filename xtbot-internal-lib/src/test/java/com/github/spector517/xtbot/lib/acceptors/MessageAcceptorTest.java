@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class MessageAcceptorsTest {
+class MessageAcceptorTest {
 
     private Update update;
     private Message message;
@@ -29,7 +29,7 @@ class MessageAcceptorsTest {
         var validMessage = "message";
         when(message.text()).thenReturn(validMessage);
 
-        assertTrue(MessageAcceptors.isAccepted(update, validMessage));
+        assertTrue(MessageAcceptor.isAccepted(update, validMessage));
     }
 
     @Test
@@ -39,7 +39,7 @@ class MessageAcceptorsTest {
         var sentMessage = "other message";
         when(message.text()).thenReturn(validMessage);
 
-        assertFalse(MessageAcceptors.isAccepted(update, sentMessage));
+        assertFalse(MessageAcceptor.isAccepted(update, sentMessage));
     }
 
     @Test
@@ -48,6 +48,6 @@ class MessageAcceptorsTest {
         var validMessage = "message";
         when(update.message()).thenReturn(null);
 
-        assertFalse(MessageAcceptors.isAccepted(update, validMessage));
+        assertFalse(MessageAcceptor.isAccepted(update, validMessage));
     }
 }

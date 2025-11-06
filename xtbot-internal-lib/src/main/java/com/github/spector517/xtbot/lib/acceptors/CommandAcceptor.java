@@ -7,17 +7,13 @@ import lombok.experimental.UtilityClass;
 
 @BotComponent
 @UtilityClass
-public class CommandAcceptors {
+public class CommandAcceptor {
 
     @Acceptor("x.accept.command")
     public boolean isAccepted(Update update, String val) {
-        if (update.message() == null) {
+        if (update.command() == null) {
             return false;
         }
-        if (update.message().text().startsWith("/")) {
-            var command = update.message().text().substring(1);
-            return command.equals(val);
-        }
-        return false;
+        return update.command().name().equals(val);
     }
 }

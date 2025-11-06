@@ -7,13 +7,13 @@ import lombok.experimental.UtilityClass;
 
 @BotComponent
 @UtilityClass
-public class MessageAcceptors {
+public class CallbackAcceptor {
 
-    @Acceptor("x.accept.message")
+    @Acceptor("x.accept.callback")
     public boolean isAccepted(Update update, String val) {
-        if (update.message() == null) {
+        if (update.callback() == null) {
             return false;
         }
-        return update.message().text().matches(val);
+        return update.callback().data().equals(val);
     }
 }

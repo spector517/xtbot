@@ -1,9 +1,6 @@
 package com.github.spector517.xtbot.core.mapper;
 
-import com.github.spector517.xtbot.api.dto.Callback;
-import com.github.spector517.xtbot.api.dto.Client;
-import com.github.spector517.xtbot.api.dto.Message;
-import com.github.spector517.xtbot.api.dto.Update;
+import com.github.spector517.xtbot.api.dto.*;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 
 public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
@@ -25,6 +22,10 @@ public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
         var message = messageData != null ? new Message(messageData.id(), messageData.text()) : null;
         var callbackData = updateData.callback();
         var callback = callbackData != null ? new Callback(callbackData.data()) : null;
-        return new Update(client, updateData.chatId(), message, callback);
+        var commandData = updateData.command();
+        var command = commandData != null
+                ? new Command(commandData.messageId(), commandData.name(), commandData.args())
+                : null;
+        return new Update(client, updateData.chatId(), message, callback, command);
     }
 }

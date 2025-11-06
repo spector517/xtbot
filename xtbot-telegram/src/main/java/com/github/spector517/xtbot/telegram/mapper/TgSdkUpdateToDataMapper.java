@@ -10,11 +10,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RequiredArgsConstructor
 public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
+
+    public static final String COMMAND_REGEX = "^/(\\w+)\\s*(.*)";
 
     private final ClientRepository clientRepository;
     private final Mapper<ClientData, ClientEntity> mapper;
@@ -22,7 +27,7 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
 
     public static long getClientId(Update update) throws MappingException {
         var clientId =  switch (getUpdateType(update)) {
-            case MESSAGE -> update.getMessage().getFrom().getId();
+            case MESSAGE, COMMAND -> update.getMessage().getFrom().getId();
             case CALLBACK -> update.getCallbackQuery().getFrom().getId();
         };
         log.debug("Client Telegram ID: {}", clientId);
@@ -41,14 +46,14 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
                 .client(clientData)
                 .chatId(chatId)
                 .type(updateType);
-        if (updateType == Type.MESSAGE) {
-            updateData.message(
+        switch (updateType) {
+            case Type.MESSAGE -> updateData.message(
                     new MessageData()
                             .id(update.getMessage().getMessageId())
                             .text(update.getMessage().getText())
             );
-        } else {
-            updateData.callback(
+            case Type.COMMAND -> updateData.command(getCommandData(update));
+            case CALLBACK -> updateData.callback(
                     new CallbackData()
                             .data(update.getCallbackQuery().getData())
             );
@@ -57,20 +62,25 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
     }
 
     private static Type getUpdateType(Update update) throws MappingException {
+        Type updateType = null;
         if (update.hasMessage()) {
-            log.debug("Update type: {}", Type.MESSAGE);
-            return Type.MESSAGE;
+            updateType = update.getMessage().getText().matches(COMMAND_REGEX)
+                    ? Type.COMMAND
+                    : Type.MESSAGE;
         }
         if (update.hasCallbackQuery()) {
-            log.debug("Update type: {}", Type.CALLBACK);
-            return Type.CALLBACK;
+            updateType = Type.CALLBACK;
         }
-        throw new MappingException("Unknown update type");
+        if (updateType == null) {
+            throw new MappingException("Unknown update type");
+        }
+        log.debug("Update type: {}", updateType);
+        return updateType;
     }
 
     private ClientData getClientData(Update update, Type type) throws MappingException {
         var user = switch (type) {
-            case MESSAGE -> update.getMessage().getFrom();
+            case MESSAGE, COMMAND -> update.getMessage().getFrom();
             case CALLBACK -> update.getCallbackQuery().getFrom();
         };
         var clientId = getClientId(update);
@@ -97,8 +107,24 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
 
     private long getChatId(Update update, Type type) {
         return switch (type) {
-            case MESSAGE -> update.getMessage().getChatId();
+            case MESSAGE, COMMAND -> update.getMessage().getChatId();
             case CALLBACK -> update.getCallbackQuery().getMessage().getChatId();
         };
+    }
+
+    private CommandData getCommandData(Update update) {
+        var messageId = update.getMessage().getMessageId();
+        var matcher = Pattern.compile(COMMAND_REGEX).matcher(update.getMessage().getText());
+        if (!matcher.find()) {
+            throw new IllegalStateException("Command not found");
+        }
+        var name = matcher.group(1);
+        List<String> args = matcher.group(2).isBlank()
+                ? List.of()
+                : Arrays.stream(matcher.group(2).split("\\s+")).toList();
+        return new CommandData()
+                .messageId(messageId)
+                .name(name)
+                .args(args);
     }
 }

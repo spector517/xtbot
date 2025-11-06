@@ -4,5 +4,6 @@ public record Update(
         Client client,
         long chatId,
         Message message,
-        Callback callback
+        Callback callback,
+        Command command
 ) {}

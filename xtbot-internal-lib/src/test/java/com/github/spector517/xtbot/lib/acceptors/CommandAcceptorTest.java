@@ -1,6 +1,6 @@
 package com.github.spector517.xtbot.lib.acceptors;
 
-import com.github.spector517.xtbot.api.dto.Message;
+import com.github.spector517.xtbot.api.dto.Command;
 import com.github.spector517.xtbot.api.dto.Update;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,47 +11,47 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class CommandAcceptorsTest {
+class CommandAcceptorTest {
 
     private Update update;
-    private Message message;
+    private Command command;
 
     @BeforeEach
     void setUp() {
         update = mock(Update.class);
-        message = mock(Message.class);
-        when(update.message()).thenReturn(message);
+        command = mock(Command.class);
+        when(update.command()).thenReturn(command);
     }
 
     @Test
     @DisplayName("Valid command")
     void testIsAccepted_0() {
-        when(message.text()).thenReturn("/test");
+        when(command.name()).thenReturn("test");
 
-        assertTrue(CommandAcceptors.isAccepted(update, "test"));
+        assertTrue(CommandAcceptor.isAccepted(update, "test"));
     }
 
     @Test
     @DisplayName("Invalid command 1")
     void testIsAccepted_1() {
-        when(message.text()).thenReturn("/test");
+        when(command.name()).thenReturn("test");
 
-        assertFalse(CommandAcceptors.isAccepted(update, "stop"));
+        assertFalse(CommandAcceptor.isAccepted(update, "stop"));
     }
 
     @Test
     @DisplayName("Invalid command 2")
     void testIsAccepted_2() {
-        when(message.text()).thenReturn("/supertest");
+        when(command.name()).thenReturn("supertest");
 
-        assertFalse(CommandAcceptors.isAccepted(update, "test"));
+        assertFalse(CommandAcceptor.isAccepted(update, "test"));
     }
 
     @Test
     @DisplayName("Null message")
     void testIsAccepted_3() {
-        when(update.message()).thenReturn(null);
+        when(update.command()).thenReturn(null);
 
-        assertFalse(CommandAcceptors.isAccepted(update, "test"));
+        assertFalse(CommandAcceptor.isAccepted(update, "test"));
     }
 }

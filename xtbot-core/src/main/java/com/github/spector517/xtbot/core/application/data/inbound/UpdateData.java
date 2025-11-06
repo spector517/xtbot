@@ -12,4 +12,5 @@ public class UpdateData {
     private Type type;
     private MessageData message;
     private CallbackData callback;
+    private CommandData command;
 }

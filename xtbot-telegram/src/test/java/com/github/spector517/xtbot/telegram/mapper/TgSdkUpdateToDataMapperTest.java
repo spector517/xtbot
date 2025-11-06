@@ -37,6 +37,7 @@ class TgSdkUpdateToDataMapperTest {
     private final String initialStageName = "initial";
     private final String messageText = "text";
     private final String callbackData = "data";
+    private final String command = "/command";
     private final Mapper<ClientData, ClientEntity> clientEntityToDataMapper =
         new ClientEntityToDataMapper(objectMapper);
 
@@ -112,9 +113,50 @@ class TgSdkUpdateToDataMapperTest {
     }
 
     @Test
-    @DisplayName("Test mapping: unknown type")
+    @DisplayName("Test mapping: command without args")
     @SneakyThrows
     void testMapToData_2() {
+        var update = getUpdate(Type.COMMAND);
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
+        var expectedUpdateData = prefilledUpdateData
+                .command(
+                        new CommandData()
+                                .name("command")
+                                .messageId(messageId)
+                                .args(List.of())
+                )
+                .type(Type.COMMAND);
+
+        var actualUpdateData = sdkMapper.map(update);
+
+        assertEquals(expectedUpdateData, actualUpdateData);
+    }
+
+    @Test
+    @DisplayName("Test mapping: command with args")
+    @SneakyThrows
+    void testMapToData_2_1() {
+        var update = getUpdate(Type.COMMAND);
+        update.getMessage().setText("/test qwe1  asd");
+        var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
+        var expectedUpdateData = prefilledUpdateData
+                .command(
+                        new CommandData()
+                                .name("test")
+                                .messageId(messageId)
+                                .args(List.of("qwe1", "asd"))
+                )
+                .type(Type.COMMAND);
+
+        var actualUpdateData = sdkMapper.map(update);
+
+        assertEquals(expectedUpdateData, actualUpdateData);
+    }
+
+    @Test
+    @DisplayName("Test mapping: unknown type")
+    @SneakyThrows
+    void testMapToData_3() {
         var update = getUpdate(null);
         var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
 
@@ -126,7 +168,7 @@ class TgSdkUpdateToDataMapperTest {
     @Test
     @DisplayName("Test mapping: user not found")
     @SneakyThrows
-    void testMapToData_3() {
+    void testMapToData_4() {
         when(clientRepository.findByExternalId(externalId))
             .thenThrow(ClientNotFoundException.class);
         var update = getUpdate(Type.MESSAGE);
@@ -179,6 +221,11 @@ class TgSdkUpdateToDataMapperTest {
                 callback.setMessage(message);
                 callback.setFrom(user);
                 update.setCallbackQuery(callback);
+            }
+            case COMMAND -> {
+                message.setText(command);
+                update.setMessage(message);
+                message.setFrom(user);
             }
             case null -> update.setMessageReaction(new MessageReactionUpdated());
         }

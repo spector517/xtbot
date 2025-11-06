@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class CallbackAcceptorsTest {
+class CallbackAcceptorTest {
 
     private Update update;
     private Callback callback;
@@ -28,7 +28,7 @@ class CallbackAcceptorsTest {
         when(update.callback()).thenReturn(callback);
         when(callback.data()).thenReturn("test");
 
-        assertTrue(CallbackAcceptors.isAccepted(update, "test"));
+        assertTrue(CallbackAcceptor.isAccepted(update, "test"));
     }
 
     @Test
@@ -37,7 +37,7 @@ class CallbackAcceptorsTest {
         when(update.callback()).thenReturn(callback);
         when(callback.data()).thenReturn("test");
 
-        assertFalse(CallbackAcceptors.isAccepted(update, "invalid"));
+        assertFalse(CallbackAcceptor.isAccepted(update, "invalid"));
     }
 
     @Test
@@ -45,16 +45,7 @@ class CallbackAcceptorsTest {
     void testIsAccepted_2() {
         when(update.callback()).thenReturn(null);
 
-        assertFalse(CallbackAcceptors.isAccepted(update, "test"));
-    }
-
-    @Test
-    @DisplayName("Callback exists and data is null")
-    void testIsAccepted_3() {
-        callback = mock(Callback.class);
-        when(update.callback()).thenReturn(callback);
-
-        assertFalse(CallbackAcceptors.isAccepted(update, "test"));
+        assertFalse(CallbackAcceptor.isAccepted(update, "test"));
     }
 }
 

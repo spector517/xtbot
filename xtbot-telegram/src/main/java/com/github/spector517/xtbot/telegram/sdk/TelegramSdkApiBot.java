@@ -36,6 +36,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.util.List;
 import java.util.Map;
@@ -303,15 +304,18 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
                 .messageId(messageId)
                 .text(text)
                 .parseMode(parseMode)
-                .linkPreviewOptions(LinkPreviewOptions.builder()
-                        .isDisabled(true)
-                        .build()
-                )
                 .build();
         try {
             log.debug("Editing message text");
             telegramClient.execute(editMessage);
         } catch (Exception ex) {
+            if (ex instanceof TelegramApiRequestException apiRequestException
+                    && apiRequestException.getMessage().contains("message is not modified")
+                    && apiRequestException.getErrorCode() == 400
+            ) {
+                log.warn("Message text are exactly the same as a current message text. Skipping edit.");
+                return;
+            }
             log.error("Editing message text error");
             throw new GatewayException(ex);
         }
@@ -327,6 +331,13 @@ public class TelegramSdkApiBot implements LongPollingSingleThreadUpdateConsumer,
             log.debug("Editing reply markup");
             telegramClient.execute(editReplyMarkup);
         } catch (Exception ex) {
+            if (ex instanceof TelegramApiRequestException apiRequestException
+                    && apiRequestException.getMessage().contains("message is not modified")
+                    && apiRequestException.getErrorCode() == 400
+            ) {
+                log.warn("Reply markup are exactly the same as a current reply markup. Skipping edit.");
+                return;
+            }
             log.error("Editing reply markup error");
             throw new GatewayException(ex);
         }

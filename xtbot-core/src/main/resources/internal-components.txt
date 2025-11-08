@@ -6,3 +6,4 @@ com.github.spector517.xtbot.lib.acceptors.MessageAcceptor
 # Executors
 com.github.spector517.xtbot.lib.executors.SshExecutors
 com.github.spector517.xtbot.lib.executors.TextExecutors
+com.github.spector517.xtbot.lib.executors.SystemExecutors

@@ -1,0 +1,72 @@
+version: 1
+database:
+  type: internal
+  h2:
+    directory: .h2
+stages:
+  - name: init
+    initial: true
+    accept:
+      - x.accept.command: start
+    next: start1111
+
+  - name: fail
+    fail: true
+    message:
+      text: Oops...
+
+  - name: start
+    message:
+      text: Pause 3 sec
+      buttons:
+        - - display: On first stage
+            data: first
+    actions:
+        - x.exec.system.pause:
+            time: 3
+    next: '{{ update.callback.data }}'
+
+  - name: first
+    message:
+      text: Pause 4 sec
+      buttons:
+        - - display: Test
+            data: test
+    accept:
+      - x.accept.message: .*
+    actions:
+      - x.exec.text.split:
+          val: '{{ update.message.text }}'
+          delimiter: '\.'
+        register: test
+      - x.exec.system.pause:
+          time: 2
+      - x.exec.text.split:
+          val: '{{ update.message.text }}'
+          delimiter: '\.'
+        register: test2
+      - x.exec.system.pause:
+          time: 2
+    save:
+      test: "{{ test | join(' ') }}"
+      test2: "{{ test2 | join(' ') }}"
+    next: '{{ update.message.text }}'
+
+  - name: second.stage
+    message:
+      text: Pause 3 sec
+    actions:
+      - x.exec.system.pause:
+          time: 1
+      - x.exec.system.pause:
+          time: 1
+      - x.exec.system.pause:
+          time: 1
+    send_typing: false
+    autocomplete: true
+    next: last
+
+  - name: last
+    message:
+      parse_mode: markdown_v2
+      text: The End

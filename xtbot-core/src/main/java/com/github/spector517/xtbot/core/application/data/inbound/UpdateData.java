@@ -10,7 +10,7 @@ public class UpdateData {
     private ClientData client;
     private long chatId;
     private Type type;
-    private MessageData message;
+    private ChatMessage message;
     private CallbackData callback;
     private CommandData command;
 }

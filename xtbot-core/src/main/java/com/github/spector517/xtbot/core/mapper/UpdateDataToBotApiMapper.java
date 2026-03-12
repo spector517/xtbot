@@ -19,7 +19,7 @@ public class UpdateDataToBotApiMapper implements Mapper<Update, UpdateData> {
                 clientData.stageVars()
         );
         var messageData = updateData.message();
-        var message = messageData != null ? new Message(messageData.id(), messageData.text()) : null;
+        var message = messageData != null ? new Message(messageData.telegramMessageId(), messageData.text()) : null;
         var callbackData = updateData.callback();
         var callback = callbackData != null ? new Callback(callbackData.data()) : null;
         var commandData = updateData.command();

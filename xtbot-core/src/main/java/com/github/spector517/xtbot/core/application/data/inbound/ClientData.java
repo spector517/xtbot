@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import org.slf4j.MDC;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @SuppressWarnings("UnusedReturnValue")
@@ -27,13 +28,13 @@ public class ClientData {
     @Getter
     private boolean stageCompleted;
     private List<String> previousStages;
-    private List<Integer> sentMessageIds;
+    private List<ChatMessage> messages;
     private Map<String, Object> additionalVars;
     private Map<String, Object> stageVars;
 
     public ClientData() {
         previousStages = new ArrayList<>();
-        sentMessageIds = new ArrayList<>();
+        messages = new ArrayList<>();
         additionalVars = new HashMap<>();
         stageVars = new HashMap<>();
     }
@@ -78,8 +79,8 @@ public class ClientData {
 
     public Optional<String> getPreviousStage() {
         return previousStages.isEmpty()
-            ? Optional.empty()
-            : Optional.of(previousStages.getLast());
+                ? Optional.empty()
+                : Optional.of(previousStages.getLast());
     }
 
     public ClientData setStageInitiated() {
@@ -92,28 +93,47 @@ public class ClientData {
         return this;
     }
 
-    public ClientData sentMessageIds(List<Integer> messageIds) {
-        this.sentMessageIds = messageIds != null
-                ? new ArrayList<>(messageIds)
+    // Derived from messages: all BOT messages with non-null telegramMessageId
+    public List<Integer> sentMessageIds() {
+        return messages.stream()
+                .filter(m -> m.type() == MessageType.BOT && m.telegramMessageId() != null)
+                .map(ChatMessage::telegramMessageId)
+                .toList();
+    }
+
+    public Optional<Integer> getPreviousSentMessageId() {
+        var botIds = sentMessageIds();
+        return botIds.isEmpty()
+                ? Optional.empty()
+                : Optional.of(botIds.getLast());
+    }
+
+    public ClientData registerBotMessage(int messageId, String text) {
+        messages.add(new ChatMessage(messageId, text, LocalDateTime.now(), MessageType.BOT));
+        return this;
+    }
+
+    public ClientData registerUserMessage(Integer messageId, String text) {
+        messages.add(new ChatMessage(messageId, text, LocalDateTime.now(), MessageType.USER));
+        return this;
+    }
+
+    public ClientData registerMessage(ChatMessage message) {
+        messages.add(message);
+        return this;
+    }
+
+    public ClientData messages(List<ChatMessage> messages) {
+        this.messages = messages != null
+                ? new ArrayList<>(messages)
                 : new ArrayList<>();
         return this;
     }
 
-    public List<Integer> sentMessageIds() {
-        return sentMessageIds != null
-                ? List.copyOf(sentMessageIds)
+    public List<ChatMessage> messages() {
+        return messages != null
+                ? List.copyOf(messages)
                 : List.of();
-    }
-
-    public ClientData registerSentMessageId(int messageId) {
-        sentMessageIds.add(messageId);
-        return this;
-    }
-
-    public Optional<Integer> getPreviousSentMessageId() {
-        return sentMessageIds.isEmpty()
-                ? Optional.empty()
-                : Optional.of(sentMessageIds.getLast());
     }
 
     public ClientData additionalVars(Map<String, Object> additionalVars) {

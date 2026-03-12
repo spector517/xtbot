@@ -83,10 +83,7 @@ class TgSdkUpdateToDataMapperTest {
         var update = getUpdate(Type.MESSAGE);
         var sdkMapper = new TgSdkUpdateToDataMapper(clientRepository, clientEntityToDataMapper, initialStageName);
         var expectedUpdateData = prefilledUpdateData
-                .message(new MessageData()
-                        .id(messageId)
-                        .text(messageText)
-                )
+                .message(new ChatMessage(messageId, messageText, null, MessageType.USER))
                 .type(Type.MESSAGE);
 
         var actualUpdateData = sdkMapper.map(update);
@@ -184,11 +181,7 @@ class TgSdkUpdateToDataMapperTest {
                         .stageVars(Map.of())
                 )
                 .chatId(chatId)
-                .message(
-                        new MessageData()
-                                .id(messageId)
-                                .text(messageText)
-                )
+                .message(new ChatMessage(messageId, messageText, null, MessageType.USER))
                 .type(Type.MESSAGE);
 
         var actualUpdateData = sdkMapper.map(update);

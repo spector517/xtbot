@@ -3,7 +3,9 @@ package com.github.spector517.xtbot.core.mapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
+import com.github.spector517.xtbot.core.application.data.inbound.MessageType;
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
+import com.github.spector517.xtbot.core.repository.entity.MessageEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +20,7 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
     private final ObjectMapper objectMapper;
     private final int collectionLimit;
 
-    public ClientDataToEntityMapper(ObjectMapper  objectMapper) {
+    public ClientDataToEntityMapper(ObjectMapper objectMapper) {
         this(objectMapper, DEFAULT_ENTITY_COLLECTION_LIMIT);
     }
 
@@ -33,15 +35,32 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
         if (clientData.stageName() != null) {
             stages.add(clientData.stageName());
         }
+        var messages = clientData.messages().stream()
+                .map(m -> new MessageEntity()
+                        .telegramMessageId(m.telegramMessageId())
+                        .text(m.text())
+                        .sentAt(m.sentAt())
+                        .type(toEntityMessageType(m.type())))
+                .toList();
         return new ClientEntity()
                 .externalId(clientData.externalId())
                 .name(clientData.name())
-                .sentMessageIds(shorList(clientData.sentMessageIds()))
+                .messages(messages)
                 .stages(shorList(stages))
                 .stageInitiated(clientData.stageInitiated())
                 .stageCompleted(clientData.stageCompleted())
                 .additionalVars(mapToJson(clientData.additionalVars()))
                 .stageVars(mapToJson(clientData.stageVars()));
+    }
+
+    private static com.github.spector517.xtbot.core.repository.entity.MessageType toEntityMessageType(
+            MessageType dataType)
+    {
+        if (dataType == null) return null;
+        return switch (dataType) {
+            case BOT -> com.github.spector517.xtbot.core.repository.entity.MessageType.BOT;
+            case USER -> com.github.spector517.xtbot.core.repository.entity.MessageType.USER;
+        };
     }
 
     private String mapToJson(Object object) {
@@ -58,7 +77,7 @@ public class ClientDataToEntityMapper implements Mapper<ClientEntity, ClientData
             return list;
         }
         return list.stream()
-                .skip(list.size() - collectionLimit)
+                .skip(skip)
                 .toList();
     }
 }

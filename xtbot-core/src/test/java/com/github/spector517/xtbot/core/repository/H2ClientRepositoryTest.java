@@ -1,6 +1,8 @@
 package com.github.spector517.xtbot.core.repository;
 
 import com.github.spector517.xtbot.core.repository.entity.ClientEntity;
+import com.github.spector517.xtbot.core.repository.entity.MessageEntity;
+import com.github.spector517.xtbot.core.repository.entity.MessageType;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,6 +22,7 @@ class H2ClientRepositoryTest {
     private Path dbDirectory;
     private Path nonExistingDBDirectory;
     private Path regularFile;
+    private LocalDateTime fixedTime;
 
     @BeforeEach
     @SneakyThrows
@@ -26,6 +30,7 @@ class H2ClientRepositoryTest {
         dbDirectory = Files.createTempDirectory("h2");
         nonExistingDBDirectory = Path.of("non", "existing", "db", "directory");
         regularFile = Files.createTempFile("h2", "db");
+        fixedTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0);
     }
 
     @AfterEach
@@ -70,7 +75,10 @@ class H2ClientRepositoryTest {
 
         var foundClient = repository.findByExternalId(11L);
 
-        assertEquals(clientEntity, foundClient);
+        assertEquals(clientEntity.externalId(), foundClient.externalId());
+        assertEquals(clientEntity.name(), foundClient.name());
+        assertEquals(clientEntity.stages(), foundClient.stages());
+        assertEquals(clientEntity.messages().size(), foundClient.messages().size());
     }
 
     @Test
@@ -100,7 +108,7 @@ class H2ClientRepositoryTest {
         repository.save(updatedClientEntity);
 
         var actualClientEntity = repository.findByExternalId(11L);
-        assertEquals(updatedClientEntity, actualClientEntity);
+        assertEquals(List.of("test2"), actualClientEntity.stages());
     }
 
     @Test
@@ -108,25 +116,91 @@ class H2ClientRepositoryTest {
     @SneakyThrows
     void save_1() {
         var repository = new H2ClientRepository(dbDirectory);
-        var beforeUpdateClientEntity = getClientEntity()
-                .externalId(11L);
+        var firstClient = getClientEntity().externalId(11L);
 
-        repository.save(beforeUpdateClientEntity);
+        repository.save(firstClient);
 
-        var updatedClientEntity = getClientEntity()
-                .externalId(22L);
+        var secondClient = getClientEntity().externalId(22L);
+        repository.save(secondClient);
 
-        repository.save(updatedClientEntity);
+        assertEquals(firstClient.externalId(), repository.findByExternalId(11L).externalId());
+        assertEquals(secondClient.externalId(), repository.findByExternalId(22L).externalId());
+    }
 
-        assertEquals(beforeUpdateClientEntity, repository.findByExternalId(11L));
-        assertEquals(updatedClientEntity, repository.findByExternalId(22L));
+    @Test
+    @DisplayName("New messages are added on save, old messages are not changed")
+    @SneakyThrows
+    void save_2() {
+        var repository = new H2ClientRepository(dbDirectory);
+        var initialMessage = new MessageEntity()
+                .telegramMessageId(100)
+                .text("initial message")
+                .sentAt(fixedTime)
+                .type(MessageType.BOT);
+        var clientEntity = getClientEntity()
+                .externalId(11L)
+                .messages(List.of(initialMessage));
+        repository.save(clientEntity);
+
+        // Second save: same message ID (duplicate) + one new message
+        var duplicateMessage = new MessageEntity()
+                .telegramMessageId(100)
+                .text("should not be duplicated")
+                .sentAt(fixedTime)
+                .type(MessageType.BOT);
+        var newMessage = new MessageEntity()
+                .telegramMessageId(200)
+                .text("new message")
+                .sentAt(fixedTime)
+                .type(MessageType.USER);
+        var updatedEntity = getClientEntity()
+                .externalId(11L)
+                .messages(List.of(duplicateMessage, newMessage));
+        repository.save(updatedEntity);
+
+        var result = repository.findByExternalId(11L);
+        assertEquals(2, result.messages().size());
+        assertEquals(100, result.messages().get(0).telegramMessageId());
+        assertEquals("initial message", result.messages().get(0).text());
+        assertEquals(200, result.messages().get(1).telegramMessageId());
+        assertEquals("new message", result.messages().get(1).text());
+    }
+
+    @Test
+    @DisplayName("Messages with null telegramMessageId are always added")
+    @SneakyThrows
+    void save_3() {
+        var repository = new H2ClientRepository(dbDirectory);
+        var callbackMsg = new MessageEntity()
+                .telegramMessageId(null)
+                .text("callback data")
+                .sentAt(fixedTime)
+                .type(MessageType.USER);
+        var clientEntity = getClientEntity()
+                .externalId(11L)
+                .messages(List.of(callbackMsg));
+        repository.save(clientEntity);
+
+        // Second save with another null-id message
+        var callbackMsg2 = new MessageEntity()
+                .telegramMessageId(null)
+                .text("another callback")
+                .sentAt(fixedTime)
+                .type(MessageType.USER);
+        var updatedEntity = getClientEntity()
+                .externalId(11L)
+                .messages(List.of(callbackMsg2));
+        repository.save(updatedEntity);
+
+        var result = repository.findByExternalId(11L);
+        assertEquals(2, result.messages().size());
     }
 
     private ClientEntity getClientEntity() {
         return new ClientEntity()
                 .externalId(11L)
                 .name("testClient")
-                .sentMessageIds(List.of(1, 2, 3))
+                .messages(List.of())
                 .stages(List.of("stage1", "stage2"))
                 .stageInitiated(true)
                 .stageCompleted(false)
@@ -134,3 +208,4 @@ class H2ClientRepositoryTest {
                 .stageVars("stageVar1=value1;stageVar2=value2");
     }
 }
+

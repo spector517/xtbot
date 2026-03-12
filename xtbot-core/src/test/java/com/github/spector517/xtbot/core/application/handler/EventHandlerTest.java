@@ -1,7 +1,9 @@
 package com.github.spector517.xtbot.core.application.handler;
 
 import com.github.spector517.xtbot.core.application.config.*;
+import com.github.spector517.xtbot.core.application.data.inbound.ChatMessage;
 import com.github.spector517.xtbot.core.application.data.inbound.ClientData;
+import com.github.spector517.xtbot.core.application.data.inbound.MessageType;
 import com.github.spector517.xtbot.core.application.data.inbound.UpdateData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputData;
 import com.github.spector517.xtbot.core.application.data.outbound.OutputType;
@@ -22,7 +24,12 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
 class EventHandlerTest {
-    
+
+    // Helper: create a BOT ChatMessage with a known telegramMessageId (sentAt=null for simplicity)
+    private static ChatMessage botMessage(int id) {
+        return new ChatMessage(id, null, null, MessageType.BOT);
+    }
+
     private Gateway gateway;
     private Config config;
 
@@ -104,7 +111,7 @@ class EventHandlerTest {
         var clientData = new ClientData()
             .previousStages(List.of())
             .bindNewStage(firstStageName)
-            .sentMessageIds(List.of(111));
+            .messages(List.of(botMessage(111)));
         var updateData = new UpdateData()
             .chatId(11)
             .client(clientData);
@@ -134,7 +141,7 @@ class EventHandlerTest {
     void run_1() {
         var clientData = new ClientData()
             .previousStages(List.of())
-            .sentMessageIds(List.of(111))
+            .messages(List.of(botMessage(111)))
             .bindNewStage(firstStageName)
             .setStageInitiated()
             .additionalVars(Map.of());
@@ -184,7 +191,7 @@ class EventHandlerTest {
     void run_3() {
         var clientData = new ClientData()
             .previousStages(List.of())
-            .sentMessageIds(List.of(111))
+            .messages(List.of(botMessage(111)))
             .bindNewStage(firstStageName)
             .setStageInitiated()
             .additionalVars(Map.of("key2", "val2"));
@@ -238,7 +245,7 @@ class EventHandlerTest {
     void run_4() {
         var clientData = new ClientData()
             .previousStages(List.of())
-            .sentMessageIds(List.of(111))
+            .messages(List.of(botMessage(111)))
             .bindNewStage(firstStageName)
             .setStageInitiated();
         var updateData = new UpdateData()

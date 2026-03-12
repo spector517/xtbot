@@ -1,7 +1,7 @@
 package com.github.spector517.xtbot.core.context;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.github.spector517.xtbot.core.application.data.inbound.MessageData;
+import com.github.spector517.xtbot.core.application.data.inbound.ChatMessage;
 
 import lombok.Getter;
 
@@ -12,8 +12,8 @@ public class MessageContext {
     private final int id;
     private final String text;
 
-    public MessageContext(MessageData messageData) {
-        this.id = messageData.id();
-        this.text = messageData.text();
+    public MessageContext(ChatMessage chatMessage) {
+        this.id = chatMessage.telegramMessageId() != null ? chatMessage.telegramMessageId() : 0;
+        this.text = chatMessage.text();
     }
 }

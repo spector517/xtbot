@@ -81,6 +81,7 @@ public class EventHandler implements Runnable {
         }
 
         Optional<Integer> sentMessageId = Optional.empty();
+        String sentMessageText = null;
         var message = stage.message();
         if (message.isPresent()) {
             var deleteId = message.get().deleteId();
@@ -96,7 +97,8 @@ public class EventHandler implements Runnable {
                         ? new OutputData(updateData.chatId(), OutputType.EDIT_MESSAGE)
                             .messageId(Integer.parseInt(message.get().id().get().value(context)))
                         : new OutputData(updateData.chatId(), OutputType.SEND_MESSAGE);
-                output.text(text.get().value(context));
+                sentMessageText = text.get().value(context);
+                output.text(sentMessageText);
                 output.parseMode(message.get().parseMode().type());
                 var buttons = message.get().buttons().stream().map(row ->
                         row.stream().map(button ->
@@ -111,13 +113,15 @@ public class EventHandler implements Runnable {
             }
         }
 
-        sentMessageId.ifPresent(id -> updateData.client().registerSentMessageId(id));
+        final var capturedText = sentMessageText;
+        sentMessageId.ifPresent(id -> updateData.client().registerBotMessage(id, capturedText));
         updateData.client().setStageInitiated();
         log.debug("Stage initiated.");
     }
 
     private void completeStage() throws MappingException, GatewayException {
         updateContext();
+        registerIncomingUserMessage();
         var isNotAccepted = stage.acceptors().stream().noneMatch(acceptor -> {
             log.debug("Run acceptor: {}", acceptor.name());
             var res = acceptor.accept(updateData);
@@ -197,5 +201,31 @@ public class EventHandler implements Runnable {
 
     private void resetSentTyping() {
         sentTypingAt = 0;
+    }
+
+    private void registerIncomingUserMessage() {
+        if (updateData.type() == null) {
+            return;
+        }
+        switch (updateData.type()) {
+            case MESSAGE -> {
+                if (updateData.message() != null) {
+                    updateData.client().registerMessage(updateData.message());
+                }
+            }
+            case COMMAND -> {
+                if (updateData.command() != null) {
+                    var text = (updateData.command().name()
+                            + (updateData.command().args().isEmpty() ? "" : " " + String.join(" ", updateData.command().args())))
+                            .trim();
+                    updateData.client().registerUserMessage(updateData.command().messageId(), text);
+                }
+            }
+            case CALLBACK -> {
+                if (updateData.callback() != null) {
+                    updateData.client().registerUserMessage(null, updateData.callback().data());
+                }
+            }
+        }
     }
 }

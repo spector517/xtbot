@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -47,11 +49,13 @@ public class TgSdkUpdateToDataMapper implements Mapper<UpdateData, Update> {
                 .chatId(chatId)
                 .type(updateType);
         switch (updateType) {
-            case Type.MESSAGE -> updateData.message(
-                    new MessageData()
-                            .id(update.getMessage().getMessageId())
-                            .text(update.getMessage().getText())
-            );
+            case Type.MESSAGE -> {
+                var msg = update.getMessage();
+                var sentAt = msg.getDate() != null
+                        ? LocalDateTime.ofEpochSecond(msg.getDate(), 0, ZoneOffset.UTC)
+                        : null;
+                updateData.message(new ChatMessage(msg.getMessageId(), msg.getText(), sentAt, MessageType.USER));
+            }
             case Type.COMMAND -> updateData.command(getCommandData(update));
             case CALLBACK -> updateData.callback(
                     new CallbackData()

@@ -41,15 +41,13 @@ class UpdateDataToContextMapperTest {
         var clientData = new ClientData()
                 .externalId(externalId)
                 .name(name)
-                .sentMessageIds(List.of(previousSentMessageId))
+                .messages(List.of(new ChatMessage(previousSentMessageId, null, null, MessageType.BOT)))
                 .previousStages(previousStages)
                 .bindNewStage(currentStage)
                 .setStageInitiated()
                 .stageVars(stageVarsWithReservedVars)
                 .additionalVars(additionalVars);
-        var messageData = new MessageData()
-                .id(messageId)
-                .text("test");
+        var messageData = new ChatMessage(messageId, "test", null, MessageType.USER);
         updateData = new UpdateData()
                 .type(Type.MESSAGE)
                 .chatId(1)

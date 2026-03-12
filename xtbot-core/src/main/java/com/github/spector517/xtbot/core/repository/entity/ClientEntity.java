@@ -22,14 +22,9 @@ public class ClientEntity {
     @Column(name = "name")
     private String name;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "xtbot_client_message_ids",
-            joinColumns = @JoinColumn(name = "client_id", referencedColumnName = "id")
-    )
-    @OrderColumn(name = "message_id_position")
-    @Column(name = "message_id", nullable = false)
-    private List<Integer> sentMessageIds;
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OrderBy("id ASC")
+    private List<MessageEntity> messages;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
